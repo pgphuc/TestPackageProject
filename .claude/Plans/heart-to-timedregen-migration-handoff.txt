@@ -1,0 +1,274 @@
+HAND-OFF: MIGRATE HEART CU -> TIMEDREGEN (ResourceManager LAM FACADE)
+=====================================================================
+Muc dich file: bàn giao cho 1 session sau thuc hien viec CAT he Heart cu
+(ResourceManager + HeartRegenService) sang DUNG he TimedRegen da co san, giu
+ResourceManager lam FACADE de UI khong phai sua. Doc HET muc 1-5 truoc khi sua.
+
+He TimedRegen da viet xong & PASS convention (xem TimedRegen_Overview.txt +
+timed-regen-build-handoff.txt). Day la buoc noi Heart vao no.
+
+
+MUC LUC
+-------
+1. Boi Canh & Muc Tieu             (#1-boi-canh)
+2. Trang Thai Hien Tai (Heart cu)  (#2-hien-trang)
+3. Quyet Dinh Kien Truc            (#3-quyet-dinh)
+4. Diem Then Chot Phai Quyet (EVENT BRIDGE)  (#4-event)
+5. Convention & An Toan            (#5-convention)
+6. Viec Can Lam - Tong Quan        (#6-tong-quan)
+7. Chi Tiet: Facade Delegation     (#7-facade)
+8. Chi Tiet: Save Migration        (#8-save)
+9. Chi Tiet: Config                (#9-config)
+10. Don Dep & Verify               (#10-verify)
+
+
+==================================================================
+1. BOI CANH & MUC TIEU                              (#1-boi-canh)
+==================================================================
+
+Heart hien chay duong CU: ResourceManager tu cam logic accrual + state heart
++ infinite heart, dung HeartRegenService (ban rieng cua logic). He generic
+TimedRegen da ton tai nhung DORMANT (chua resource nao noi vao).
+
+MUC TIEU: Heart chay qua TimedRegen (RegenResourceType.Heart, kind=Cooldown).
+ResourceManager GIU API heart cu (facade) -> UI (HeartView, PopupHeartRefill,
+PopupTryRetry, GameplayController) KHONG phai sua. Xoa HeartRegenService khi xong.
+
+KHONG dua INFINITE HEART vao TimedRegen — no la buff RIENG (gate boolean +
+expire), o lai ResourceManager. (Tuong lai co the cat sang he "TimedBuff" rieng,
+xem timed-buff-instance-plan.txt — KHONG lam o day.)
+
+
+==================================================================
+2. TRANG THAI HIEN TAI (HEART CU)                   (#2-hien-trang)
+==================================================================
+
+ResourceManager (AResourceManager : JMonoBehaviour) — heart API (giu nguyen chu ky):
+  GetHeartCount() / GetMaxHeart() / AddHeart(amount, HeartGainReason) /
+  UseHeart(amount)->bool / SetInfiniteHeart(float) / IsInfiniteHeartActive() /
+  GetInfiniteHeartRemainingSeconds() / GetSecondsUntilNextHeart() / ApplyPendingRegen()
+Config inspector: maxHeart=5, heartRegenSeconds=1800.
+State (qua SavedPlayerProgressData accessor):
+  heartCount, lastHeartRegenUtcTicks, infiniteHeartExpireUtcTicks.
+Logic accrual + self-heal: GIONG HET CooldownRegenInstance (da port y nguyen).
+Event: OnHeartChange (gainReason, success, newAmount, changeAmount),
+       OnInfiniteHeartChange (isActive, remainingSeconds).
+HeartRegenService / AHeartRegenService: logic thuan = GIONG HET TimedRegenService.
+
+So sanh: Heart cu CHINH LA Cooldown instance + service, chi khac ten/event.
+=> Migration la "thay ruot" ResourceManager bang loi goi TimedRegen.
+
+Consumers (chi goi qua ResourceManager API + nghe OnHeartChange/OnInfiniteHeartChange):
+  HeartView.cs, PopupHeartRefill.cs, PopupTryRetry.cs, GameplayController.cs.
+  => Giu facade + giu raise OnHeartChange/OnInfiniteHeartChange thi UI KHONG doi.
+
+
+==================================================================
+3. QUYET DINH KIEN TRUC                             (#3-quyet-dinh)
+==================================================================
+
+3.1 ResourceManager = FACADE. Heart API giu nguyen signature (AResourceManager
+    khong doi) -> UI khong sua. Ruot delegate sang _timedRegenManager.
+
+3.2 Heart = RegenResourceType.Heart, kind = Cooldown. maxCount=5, regenSeconds=1800
+    chuyen vao TimedRegenConfig (point Heart). Bo 2 field [SerializeField] maxHeart/
+    heartRegenSeconds o ResourceManager (hoac de lai cung vo hai — nhung nen bo cho sach).
+
+3.3 INFINITE HEART o lai ResourceManager nguyen ven (field infiniteHeartExpireUtcTicks,
+    Set/Is/GetRemaining). UseHeart van check IsInfiniteHeartActive() TRUOC khi tieu —
+    logic "de len" nam o facade, dung cho TimedRegen biet.
+
+3.4 Save: chuyen heartCount + lastHeartRegenUtcTicks sang SavedRegenData
+    (SavedRegenPoint type=Heart). infiniteHeartExpireUtcTicks O LAI
+    SavedPlayerProgressData. Du an dang dev -> SUA THANG, KHONG bump version
+    (theo chi dao user). Xem muc 8 ve mat data heart cu.
+
+3.5 Xoa HeartRegenService + AHeartRegenService (ca .meta) sau khi ResourceManager
+    khong con tham chieu.
+
+
+==================================================================
+4. DIEM THEN CHOT PHAI QUYET (EVENT BRIDGE)         (#4-event)
+==================================================================
+
+VAN DE: UI nghe OnHeartChange. TimedRegen raise OnTimedRegenChange (khong co
+HeartGainReason). Regen "ngam" xay ra BEN TRONG TimedRegen (luc GetCount/Use goi
+ApplyPendingRegen) -> ResourceManager khong tu biet de raise OnHeartChange.
+
+=> Phai BRIDGE OnTimedRegenChange(type==Heart) -> OnHeartChange. 2 cach, CHON 1:
+
+CACH A (KHUYEN NGHI): ResourceManager SUBSCRIBE OnTimedRegenChange.
+  - Khi type==Heart -> raise OnHeartChange { newAmount, changeAmount,
+    success = true, gainReason = <reason dang cho> }.
+  - Reason: giu 1 field tam `pendingHeartGainReason` (default TimePassed). Truoc khi
+    goi AddHeart/Use set reason tuong ung; handler bridge doc roi reset ve TimePassed.
+    -> regen ngam tu dong mang reason TimePassed; Add mang dung reason.
+  - AddHeart/UseHeart (path thanh cong) KHONG raise OnHeartChange truc tiep — de bridge
+    lam (tranh double-raise).
+  - 2 path ResourceManager VAN tu raise (vi TimedRegen khong raise):
+      * UseHeart khi infinite active (khong goi TimedRegen.Use) -> raise success=true.
+      * UseHeart that bai (khong du) -> TimedRegen.Use tra false, khong raise -> RM raise success=false.
+  Uu: 1 nguon su that cho moi thay doi count (ke ca regen ngam). Nhuoc: co field tam.
+
+CACH B: KHONG subscribe. AddHeart/UseHeart tu raise OnHeartChange sau khi goi TimedRegen.
+  - Nhuoc LON: regen ngam (TimePassed) xay ra trong GetHeartCount/Use se KHONG phat
+    OnHeartChange -> UI khong update khi heart tu hoi. Phai goi GetSecondsUntilNext/poll.
+  - Chi chap nhan neu UI heart KHONG dua vao event regen (chi poll moi giay). Kiem tra
+    HeartView truoc khi chon. Don gian hon nhung de mat update.
+
+=> KHUYEN NGHI CACH A. Hoi user xac nhan truoc khi code (anh huong UI behaviour).
+   Kiem HeartView.cs xem no update theo event hay poll de chot.
+
+
+==================================================================
+5. CONVENTION & AN TOAN                             (#5-convention)
+==================================================================
+
+Doc code-conventions.md + unity-safety.md. Tom tat lien quan:
+  - { cung dong; class inherit JBase/JMonoBehaviour/JScriptableObject; Log() khong Debug.Log.
+  - Ten bien = ten class viet thuong chu dau. Namespace JoyCraftSDK.* .
+  - SAVE: doi/xoa field SavedXxxData co the hong save cu. Du an dang dev -> sua thang,
+    khong bump (theo chi dao user) — NHUNG xem muc 8: heart cu cua tester se mat/ve 0
+    neu khong viet migration copy. Quyet dinh ro voi user.
+  - KHONG sua .prefab/.unity/.asset/.meta bang text. maxHeart/heartRegenSeconds neu
+    dang set tren prefab/inspector -> chuyen sang asset TimedRegenConfig (user lam Editor).
+  - C# Unity khong verify nhanh -> bao user compile Editor. Chay /convention-check.
+  - Hoi confirm truoc khi Edit/Write code.
+
+VUNG VO RUNTIME DU COMPILE GREEN (can tay):
+  - Quen register / sai facade delegate -> heart ve 0 hoac null runtime.
+  - Bridge sai -> UI heart khong update / double count.
+  - Test ky path: vao level (UseHeart), het heart, doi gio, dong/mo app, infinite heart.
+
+
+==================================================================
+6. VIEC CAN LAM - TONG QUAN                         (#6-tong-quan)
+==================================================================
+
+A. (CHOT muc 4) chon cach bridge event. Mac dinh: Cach A.
+B. ResourceManager: thay ruot heart API -> goi _timedRegenManager (muc 7).
+   Giu infinite heart nguyen. Bo field maxHeart/heartRegenSeconds + heartRegenService.
+C. Save: bo heartCount + lastHeartRegenUtcTicks khoi SavedPlayerProgressData +
+   accessor; (tuy chon) viet migration copy sang SavedRegenData (muc 8).
+   Giu infiniteHeartExpireUtcTicks.
+D. Config: them point Heart vao asset TimedRegenConfig (maxCount=5, regenSeconds=1800,
+   kind=Cooldown). User lam trong Editor.
+E. Xoa HeartRegenService + AHeartRegenService (+ .meta).
+F. Compile Editor + test (muc 10) + /convention-check.
+
+API AResourceManager.heart* GIU NGUYEN. Event OnHeartChange/OnInfiniteHeartChange GIU.
+
+
+==================================================================
+7. CHI TIET: FACADE DELEGATION                      (#7-facade)
+==================================================================
+
+Trong ResourceManager (Heart region), thay ruot. RegenResourceType.Heart la "Heart".
+
+  GetHeartCount()          -> return _timedRegenManager.GetCount(Heart);
+  GetMaxHeart()            -> return _timedRegenManager.GetMaxCount(Heart);
+  GetSecondsUntilNextHeart()-> if (IsInfiniteHeartActive()) return 0f;
+                              return _timedRegenManager.GetSecondsUntilNext(Heart);
+  ApplyPendingRegen()      -> _timedRegenManager.ApplyPendingRegen(Heart);
+  AddHeart(amount, reason) -> pendingHeartGainReason = reason;          // CACH A
+                              _timedRegenManager.Add(Heart, amount);
+                              // KHONG raise o day — bridge lo (Cach A)
+  UseHeart(amount)         -> ApplyPendingRegen() (qua GetCount/Use deu tu goi);
+                              if (IsInfiniteHeartActive()) {
+                                  raise OnHeartChange success=true, changeAmount=amount,
+                                        newAmount = GetHeartCount(); return true;
+                              }
+                              bool ok = _timedRegenManager.Use(Heart, amount); // success -> bridge raise
+                              if (!ok) raise OnHeartChange success=false, changeAmount=0,
+                                             newAmount = GetHeartCount();
+                              return ok;
+
+  // INFINITE HEART giu nguyen (khong dung TimedRegen):
+  SetInfiniteHeart / IsInfiniteHeartActive / GetInfiniteHeartRemainingSeconds: NHU CU.
+
+BRIDGE (Cach A) — them handler + sub/unsub:
+  private HeartGainReason pendingHeartGainReason = HeartGainReason.TimePassed;
+  private void OnTimedRegenChangeHandler(ref OnTimedRegenChange e) {
+      if (e.type != RegenResourceType.Heart) return;
+      _eventBus.Raise(new OnHeartChange {
+          gainReason = pendingHeartGainReason,
+          success = true,
+          newAmount = e.newAmount,
+          changeAmount = e.changeAmount
+      });
+      pendingHeartGainReason = HeartGainReason.TimePassed; // reset ve default (regen ngam)
+  }
+  Subscribe(): _eventBus.SubscribeTo<OnTimedRegenChange>(OnTimedRegenChangeHandler);
+  Unsubscribe(): _eventBus.UnsubscribeFrom<OnTimedRegenChange>(OnTimedRegenChangeHandler);
+
+LUU Y: kiem dau "->" khi changeAmount<0 (Use) van map dung dau cho UI. TimedRegen.Use
+raise changeAmount = -amount; OnHeartChange cu khi Use truoc day raise changeAmount=amount
+(duong). Neu UI dua vao dau -> doi chieu HeartView de map cho khop (co the can Math.Abs
+hoac giu dau). CHOT theo HeartView thuc te.
+
+
+==================================================================
+8. CHI TIET: SAVE MIGRATION                         (#8-save)
+==================================================================
+
+8.1 Bo khoi SavedPlayerProgressData.cs:
+    - field heartCount (neu rieng) + lastHeartRegenUtcTicks.
+    - Trong block reset (cho thay lastHeartRegenUtcTicks=0): bo dong lien quan heart regen.
+    GIU infiniteHeartExpireUtcTicks.
+8.2 Bo accessor trong SavedPlayerProgressDataFunctions.cs:
+    GetHeart/SetHeart, GetLastHeartRegenUtcTicks/SetLastHeartRegenUtcTicks.
+    GIU GetInfiniteHeartExpireUtcTicks/SetInfiniteHeartExpireUtcTicks.
+8.3 Heart state moi nam o SavedRegenData (point type=Heart) — TimedRegen tu tao
+    qua GetOrCreatePoint. count khoi tao 0 -> self-heal cua Cooldown se bat dau dem.
+
+8.4 DATA HEART CU CUA TESTER:
+    - SUA THANG (chi dao user, dang dev): bo field -> heart cu mat, point Heart moi
+      bat dau count=0, lazy regen tu day. Chap nhan duoc khi dang dev.
+    - (TUY CHON) migration copy 1 lan: trong PreProcessAfterLoad cua SavedPlayerProgressData,
+      neu con field cu > 0 va SavedRegenData chua co point Heart -> tao point Heart voi
+      count=heartCount cu, lastRegenUtcTicks = lastHeartRegenUtcTicks cu. Chi lam neu
+      can giu heart tester. Hoi user.
+    KHONG bump version (theo chi dao user). Neu prod thi PHAI co migration + version.
+
+
+==================================================================
+9. CHI TIET: CONFIG                                 (#9-config)
+==================================================================
+
+- Asset TimedRegenConfig: them 1 configPoint:
+    type = Heart, kind = Cooldown, maxCount = 5, regenSeconds = 1800,
+    resetValue = 0 (bo qua), hardMaxCount = 0 (= maxCount, khong overfill).
+  (Claude KHONG sua .asset -> user dien trong Inspector. Bao user.)
+- Gan asset vao GameConfigs.timedRegenConfig (neu chua).
+- Bo [SerializeField] maxHeart / heartRegenSeconds khoi ResourceManager (gia tri
+  da chuyen vao config). Neu chung dang set tren prefab thi khong sao khi xoa field
+  (Unity bo serialized thua) — nhung kiem lai khong cho noi nao con doc.
+
+
+==================================================================
+10. DON DEP & VERIFY                                (#10-verify)
+==================================================================
+
+10.1 Xoa HeartRegenService.cs + AHeartRegenService.cs (+ .meta tuong ung) sau khi
+     ResourceManager khong con `new HeartRegenService()` / tham chieu. Grep
+     "HeartRegenService" = 0 ket qua (ngoai chinh file bi xoa) truoc khi xoa.
+10.2 Compile trong Unity Editor — buoc verify that.
+10.3 Bao user: dien point Heart vao TimedRegenConfig + gan GameConfigs (Editor).
+10.4 Play scene, test:
+     - GetHeartCount dung; vao level (UseHeart) tru 1; het heart -> chan vao level.
+     - Cho/doi gio -> heart hoi +1 moi 1800s; UI update (qua OnHeartChange bridge).
+     - Dong/mo app -> heart hoi bu dung.
+     - AddHeart (reward) -> cap o max 5, UI dung reason.
+     - Infinite heart: SetInfiniteHeart -> UseHeart khong tru, IsActive/Remaining dung;
+       het han -> tro lai tru binh thuong.
+10.5 /convention-check tren ResourceManager + cac file save da sua.
+
+
+==================================================================
+GHI CHU LIEN QUAN
+=================
+- He TimedRegen: Docs/SourceOfTruth/System/TimedRegen_Overview.txt
+- Build TimedRegen tu dau (project khac): .claude/plans/timed-regen-build-handoff.txt
+- Buff theo thoi luong (infinite heart generic hoa sau): .claude/plans/timed-buff-instance-plan.txt
+
+HET.

@@ -1,0 +1,750 @@
+HAND-OFF: BUILD HE TIMEDREGEN TU DAU (PORT SANG PROJECT KHAC)
+=============================================================
+Muc dich file: dua cho 1 session o PROJECT KHAC (cung SDK JoyCraftSDK, dang
+co he Heart cu, CHUA co TimedRegen) doc va GENERATE toan bo he TimedRegen
+giong project goc (ball_loop). Doc HET muc 1-5 truoc khi sinh code.
+
+He nay da chay & PASS convention o project goc. Day la ban port-ready: source
+day du + wiring chinh xac. Adapt ten/path neu project dich khac chut.
+
+
+MUC LUC
+-------
+1. Boi Canh & Muc Tieu            (#1-boi-canh)
+2. Kien Truc & Quyet Dinh Da Chot (#2-kien-truc)
+3. Convention Bat Buoc             (#3-convention)
+4. Danh Sach File                  (#4-file)
+5. Thu Tu Thuc Hien                (#5-thu-tu)
+6. SOURCE 6 FILE MOI (paste-ready) (#6-source)
+7. Wiring 7 File Sua (snippet)     (#7-wiring)
+8. Unity Editor + Verify           (#8-verify)
+9. Cach Them Resource + Tuong Lai  (#9-tuong-lai)
+
+
+==================================================================
+1. BOI CANH & MUC TIEU                              (#1-boi-canh)
+==================================================================
+
+Game mobile Unity tren SDK JoyCraftSDK. Project dich DANG co he "heart hoi
+theo thoi gian" cu (ResourceManager + HeartRegenService) GIONG project goc,
+nhung CHUA co khung generic TimedRegen.
+
+MUC TIEU: dung khung GENERIC TimedRegen de nhieu resource hoi/reset theo thoi
+gian dung chung (heart, energy, daily ads, daily objective...). Khung model 2
+kieu thoi gian:
+  - Cooldown / interval-accrual (heart, energy): hoi DAN +1 moi N giay.
+  - Daily reset (daily ads, daily objective): reset day 1 phat tai 00:00 UTC.
+
+PHAM VI BAN PORT NAY: chi DUNG KHUNG (dormant). KHONG dung toi Heart cu —
+heart van chay duong cu. Cat heart sang generic la viec sau (muc 9).
+
+Tinh chat then chot:
+  - LAZY: chi tinh khi duoc hoi, KHONG ticker moi frame -> dung ca khi app
+    dong/suspend. Moc thoi gian theo UTC (chong lech clock may).
+  - Manager la PURE C# SINGLETON (JBase), KHONG MonoBehaviour -> KHONG dung
+    prefab ProjectManagers. VContainer tu resolve.
+
+
+==================================================================
+2. KIEN TRUC & QUYET DINH DA CHOT                   (#2-kien-truc)
+==================================================================
+
+2.1 ABSTRACT instance + 2 SUBCLASS (KHONG interface, KHONG policy/strategy):
+  - ATimedRegenInstance (abstract, JBase): giu STATE CHUNG (count, lastTicks
+    qua SavedRegenPoint, max, hardMax) + so hoc Add/Use/RaiseChange/GetCount.
+  - CooldownRegenInstance: accrual +1 moi regenSeconds, neo vao moc dung cuoi.
+  - DailyResetRegenInstance: reset ve resetValue tai 00:00 UTC.
+  - Ly do: 2 kieu khac BAN CHAT (rolling vs moc lich) -> time-math khac han.
+    Interface khong giu state (2 concrete phai copy state) -> dung abstract.
+    Behavior bam chat state instance -> co-locate qua ke thua, dung tach policy.
+
+2.2 ATimedRegenService (abstract, JBase) — logic accrual THUAN, STATELESS:
+  - 3 ham: CalculatePendingRegen / AdvanceLastRegenTicks / GetSecondsUntilNext.
+  - Chi Cooldown dung. Share 1 instance cho moi cooldown. De unit test.
+
+2.3 Factory theo kind trong Manager: RegisterResource(TimedRegenConfigPoint)
+  switch theo configPoint.kind -> dung dung subclass.
+
+2.4 Overfill (di qua maxCount): tach 2 cap.
+  - maxCount     = moc TIME-ACCRUAL hoi toi (regen Cooldown fill toi day).
+  - hardMaxCount = TRAN TUYET DOI cho grant thu cong (Add). Cho > maxCount
+    -> kieu "nang luong overfill". GetCount tra SO THAT (UI tu quyet hien thi).
+  - DailyReset ÉP hardMaxCount = maxCount (KHONG overfill).
+  - NormalizeHardMax: hardMaxCount < maxCount (gom 0/bo trong) -> = maxCount.
+  - Khi count > maxCount: regen Cooldown TU NGU; Use keo xuong < max -> self-heal
+    restart. Khong pha invariant.
+
+2.5 Invariant Cooldown: "count < maxCount ⟺ lastRegenUtcTicks > 0".
+  - Day -> tick = 0. count<max ma tick<=0 -> SELF-HEAL set tick=now.
+  - DailyReset KHONG co invariant nay (tick = moc reset gan nhat).
+
+2.6 Moc reset daily = 00:00 UTC (DateTime.UtcNow.Date.Ticks). Neu can
+  local-midnight -> quyet dinh khac, hoi user.
+
+2.7 Save schema: SavedRegenPoint (type + count + lastRegenUtcTicks) du cho ca
+  2 kieu. DailyReset dung lastRegenUtcTicks lam "moc reset gan nhat".
+
+
+==================================================================
+3. CONVENTION BAT BUOC                              (#3-convention)
+==================================================================
+
+Doc code-conventions.md + unity-safety.md cua PROJECT DICH truoc khi viet.
+Tom tat (ban port nay tuan theo san):
+  - Dau { CUNG DONG voi statement.
+  - Moi class inherit JBase / JMonoBehaviour / JScriptableObject.
+  - KHONG Debug.Log -> Log()/LogWarning()/LogError() cua base.
+  - Enum: [Serializable] + explicit int. Them member moi gan int MOI,
+    KHONG chen giua / tai dung (da serialize vao save).
+  - Abstract prefix A. Interface prefix I. Manager suffix Manager.
+  - Ten bien = ten class viet thuong chu dau.
+  - Namespace: JoyCraftSDK (core) / JoyCraftSDK.Game (game) /
+    JoyCraftSDK.SaveSystem (save). Giu y nhu source duoi.
+  - TUYET DOI KHONG sua .prefab/.unity/.asset/.meta bang text (hook chan).
+    Can asset -> mo ta cho user lam trong Editor.
+  - C# Unity KHONG verify nhanh duoc -> bao user compile trong Editor.
+  - Chay /convention-check sau khi viet. Hoi confirm truoc khi Edit/Write code.
+
+
+==================================================================
+4. DANH SACH FILE                                   (#4-file)
+==================================================================
+
+TAO MOI — thu muc Assets/!_/TimedRegen/ (6 file):
+  - RegenResourceType.cs   : enum dinh danh resource.
+  - RegenKind.cs           : enum kieu thoi gian.
+  - TimedRegenService.cs   : ATimedRegenService + TimedRegenService (logic thuan).
+  - TimedRegenInstance.cs  : ATimedRegenInstance + Cooldown + DailyReset.
+  - TimedRegenManager.cs   : ATimedRegenManager + TimedRegenManager (factory + route).
+  - TimedRegenConfig.cs    : ATimedRegenConfig + TimedRegenConfig + ConfigPoint.
+  - SavedRegenData.cs      : SavedRegenData (JSaveData) + SavedRegenPoint.
+  (=> 7 file thuc te; SavedRegenData tach rieng.)
+
+SUA (wiring, ADDITIVE — KHONG dung Heart cu):
+  - AEventManager.Gameplay.cs           : them event OnTimedRegenChange.
+  - SavedPlayerProgressData.cs          : field savedRegenData + ChildrenISavableData.
+  - SavedPlayerProgressDataFunctions.cs : accessor SavedRegenData.
+  - GameConfigs.cs                      : field ATimedRegenConfig timedRegenConfig.
+  - ProjectScope.cs                     : Register TimedRegenManager.
+  - ProjectManagers.cs                  : property + Construct param + assign.
+  - JBase.cs + JMonoBehaviour.cs        : accessor _timedRegenManager.
+
+
+==================================================================
+5. THU TU THUC HIEN                                 (#5-thu-tu)
+==================================================================
+
+1. Tao 7 file moi (muc 6) — khong phu thuoc Heart cu.
+2. Sua 7 cho wiring (muc 7). Save + DI + event + config.
+3. Compile trong Unity Editor (muc 8).
+4. Tao asset TimedRegenConfig + gan vao GameConfigs (user lam, Editor).
+5. /convention-check.
+
+LUU Y phu thuoc namespace/type cua SDK dich (phai co san, vi cung SDK):
+  JBase, JMonoBehaviour, JScriptableObject; JSaveData / ISavableData;
+  _eventBus, _playerProgressData, _gameConfig (accessor trong JBase);
+  ProjectManagers.Instance; GameConstants.PrototypePath; AEventManager (partial,
+  event la nested class + instance dung `using static`). Neu khac ten -> adapt.
+
+
+==================================================================
+6. SOURCE 6 FILE MOI (paste-ready)                  (#6-source)
+==================================================================
+
+------------------------------------------------------------------
+6.1 RegenResourceType.cs
+------------------------------------------------------------------
+using System;
+
+namespace JoyCraftSDK.Game {
+    /// <summary>
+    /// Dinh danh 1 loai resource hoi theo thoi gian (heart, energy, ...).
+    /// Moi gia tri = 1 instance trong <see cref="TimedRegenManager"/>.
+    /// </summary>
+    [Serializable]
+    public enum RegenResourceType {
+        None = 0,
+        Heart = 1,
+    }
+}
+
+------------------------------------------------------------------
+6.2 RegenKind.cs
+------------------------------------------------------------------
+using System;
+
+namespace JoyCraftSDK.Game {
+    /// <summary>
+    /// Kieu thoi gian cua 1 resource hoi/reset:
+    /// - Cooldown: hoi dan +1 moi chu ky, neo vao thoi diem dung cuoi (heart, energy).
+    /// - DailyReset: reset day 1 phat tai moc 00:00 UTC (daily ads, daily objective).
+    /// </summary>
+    [Serializable]
+    public enum RegenKind {
+        None = 0,
+        Cooldown = 1,
+        DailyReset = 2,
+    }
+}
+
+------------------------------------------------------------------
+6.3 TimedRegenService.cs
+------------------------------------------------------------------
+using System;
+using JoyCraftSDK.Utilities;
+
+namespace JoyCraftSDK.Game {
+    /// <summary>
+    /// Logic thuan tinh regen theo thoi gian thuc (UTC), generic cho moi resource.
+    /// Stateless: nhan state qua tham so (last ticks, current count, config) va tra ve ket qua.
+    /// Tach khoi MonoBehaviour de de unit test. Day la ban generic hoa cua HeartRegenService.
+    /// </summary>
+    public class TimedRegenService : ATimedRegenService {
+        public override int CalculatePendingRegen(long lastRegenUtcTicks, int currentCount, int maxCount, int regenSeconds, long nowUtcTicks) {
+            if (currentCount >= maxCount) return 0;
+            if (lastRegenUtcTicks <= 0) return 0;
+            if (regenSeconds <= 0) return 0;
+            long elapsedTicks = nowUtcTicks - lastRegenUtcTicks;
+            if (elapsedTicks <= 0) return 0;
+            long intervalTicks = TimeSpan.FromSeconds(regenSeconds).Ticks;
+            int count = (int)(elapsedTicks / intervalTicks);
+            int missing = maxCount - currentCount;
+            return count > missing ? missing : count;
+        }
+
+        public override long AdvanceLastRegenTicks(long lastRegenUtcTicks, int regenSeconds, int regenedCount) {
+            long intervalTicks = TimeSpan.FromSeconds(regenSeconds).Ticks;
+            return lastRegenUtcTicks + intervalTicks * regenedCount;
+        }
+
+        public override float GetSecondsUntilNext(long lastRegenUtcTicks, int currentCount, int maxCount, int regenSeconds, long nowUtcTicks) {
+            if (currentCount >= maxCount) return 0f;
+            if (regenSeconds <= 0) return 0f;
+            if (lastRegenUtcTicks <= 0) return regenSeconds;
+            long intervalTicks = TimeSpan.FromSeconds(regenSeconds).Ticks;
+            long nextTicks = lastRegenUtcTicks + intervalTicks;
+            long remainingTicks = nextTicks - nowUtcTicks;
+            if (remainingTicks <= 0) return 0f;
+            return (float)TimeSpan.FromTicks(remainingTicks).TotalSeconds;
+        }
+    }
+
+    /// <summary>
+    /// Abstract base cho timed-regen logic. Cho phep swap implementation khi can
+    /// (vd: server-time based de chong cheat doi clock may).
+    /// </summary>
+    public abstract class ATimedRegenService : JBase {
+        public abstract int CalculatePendingRegen(long lastRegenUtcTicks, int currentCount, int maxCount, int regenSeconds, long nowUtcTicks);
+        public abstract long AdvanceLastRegenTicks(long lastRegenUtcTicks, int regenSeconds, int regenedCount);
+        public abstract float GetSecondsUntilNext(long lastRegenUtcTicks, int currentCount, int maxCount, int regenSeconds, long nowUtcTicks);
+    }
+}
+
+------------------------------------------------------------------
+6.4 TimedRegenInstance.cs
+------------------------------------------------------------------
+using System;
+using JoyCraftSDK.Game.SaveData;
+using JoyCraftSDK.Utilities;
+using static JoyCraftSDK.AEventManager;
+
+namespace JoyCraftSDK.Game {
+    /// <summary>
+    /// Base cho runtime cua 1 resource hoi/reset theo thoi gian. Giu STATE CHUNG
+    /// (count, lastRegenUtcTicks qua SavedRegenPoint) + so hoc Add/Use/RaiseChange.
+    /// Phan khac ban chat giua cac kieu thoi gian (tinh pending, secondsUntilNext) la abstract.
+    /// Lazy regen: chi tinh khi duoc hoi -> dung ca khi app dong/suspend.
+    /// </summary>
+    public abstract class ATimedRegenInstance : JBase {
+        private readonly RegenResourceType type;
+        private readonly int maxCount;
+        private readonly int hardMaxCount;
+        private readonly SavedRegenPoint savedRegenPoint;
+
+        protected ATimedRegenInstance(RegenResourceType type, int maxCount, int hardMaxCount, SavedRegenPoint savedRegenPoint) {
+            this.type = type;
+            this.maxCount = maxCount;
+            this.hardMaxCount = hardMaxCount;
+            this.savedRegenPoint = savedRegenPoint;
+        }
+
+        public RegenResourceType Type => type;
+        // maxCount: moc time-accrual hoi toi. hardMaxCount: tran tuyet doi cho grant thu cong (>= maxCount).
+        public int MaxCount => maxCount;
+        public int HardMaxCount => hardMaxCount;
+
+        protected int count {
+            get => savedRegenPoint.count;
+            set => savedRegenPoint.count = value;
+        }
+
+        protected long lastRegenUtcTicks {
+            get => savedRegenPoint.lastRegenUtcTicks;
+            set => savedRegenPoint.lastRegenUtcTicks = value;
+        }
+
+        public int GetCount() {
+            ApplyPendingRegen();
+            return count;
+        }
+
+        /// <summary>Cong (cap o hardMaxCount — cho phep vuot maxCount neu hardMaxCount > maxCount).</summary>
+        public void Add(int amount) {
+            if (amount < 0) return;
+            ApplyPendingRegen();
+            int before = count;
+            count = Math.Min(count + amount, hardMaxCount);
+            int actualAdded = count - before;
+            OnAfterCountChanged();
+            if (actualAdded > 0) RaiseChange(actualAdded);
+        }
+
+        /// <summary>Tru khi dung. Tra false neu khong du.</summary>
+        public bool Use(int amount) {
+            ApplyPendingRegen();
+            if (count < amount) return false;
+            count -= amount;
+            OnAfterCountChanged();
+            RaiseChange(-amount);
+            return true;
+        }
+
+        protected void RaiseChange(int changeAmount) {
+            _eventBus.Raise(new OnTimedRegenChange {
+                type = type,
+                newAmount = count,
+                changeAmount = changeAmount
+            });
+        }
+
+        public abstract void ApplyPendingRegen();
+        public abstract float GetSecondsUntilNext();
+
+        /// <summary>Hook sau khi count doi do Add/Use; mac dinh no-op. Cooldown override de giu "full -> tick=0".</summary>
+        protected virtual void OnAfterCountChanged() {}
+    }
+
+    /// <summary>
+    /// Kieu cooldown / interval-accrual: hoi +1 moi regenSeconds, neo vao thoi diem dung cuoi,
+    /// cap tai max (heart, energy). Goi invariant "count < max ⟺ tick > 0" qua self-heal.
+    /// </summary>
+    public class CooldownRegenInstance : ATimedRegenInstance {
+        private readonly int regenSeconds;
+        private readonly ATimedRegenService timedRegenService;
+
+        public CooldownRegenInstance(RegenResourceType type, int maxCount, int hardMaxCount, int regenSeconds,
+            SavedRegenPoint savedRegenPoint, ATimedRegenService timedRegenService)
+            : base(type, maxCount, hardMaxCount, savedRegenPoint) {
+            this.regenSeconds = regenSeconds;
+            this.timedRegenService = timedRegenService;
+        }
+
+        public override void ApplyPendingRegen() {
+            if (count >= MaxCount) return;
+
+            // Self-heal: count < max ma chua co moc dem -> start countdown tu now.
+            if (lastRegenUtcTicks <= 0) {
+                lastRegenUtcTicks = DateTime.UtcNow.Ticks;
+                return;
+            }
+
+            long now = DateTime.UtcNow.Ticks;
+            int regened = timedRegenService.CalculatePendingRegen(
+                lastRegenUtcTicks, count, MaxCount, regenSeconds, now);
+            if (regened <= 0) return;
+
+            count += regened;
+            if (count >= MaxCount) lastRegenUtcTicks = 0;
+            else lastRegenUtcTicks = timedRegenService.AdvanceLastRegenTicks(lastRegenUtcTicks, regenSeconds, regened);
+            RaiseChange(regened);
+        }
+
+        public override float GetSecondsUntilNext() {
+            if (count >= MaxCount) return 0f;
+            return timedRegenService.GetSecondsUntilNext(
+                lastRegenUtcTicks, count, MaxCount, regenSeconds, DateTime.UtcNow.Ticks);
+        }
+
+        protected override void OnAfterCountChanged() {
+            if (count >= MaxCount) lastRegenUtcTicks = 0;
+        }
+    }
+
+    /// <summary>
+    /// Kieu daily reset: count = "so luong con dung duoc hom nay"; reset do ve resetValue
+    /// khi qua moc 00:00 UTC (daily ads, daily objective). lastRegenUtcTicks = "moc reset gan nhat".
+    /// </summary>
+    public class DailyResetRegenInstance : ATimedRegenInstance {
+        private readonly int resetValue;
+
+        // DailyReset KHONG cho overfill -> hardMaxCount ep = maxCount.
+        public DailyResetRegenInstance(RegenResourceType type, int maxCount, int resetValue,
+            SavedRegenPoint savedRegenPoint)
+            : base(type, maxCount, maxCount, savedRegenPoint) {
+            this.resetValue = resetValue;
+        }
+
+        // DateTime.UtcNow.Date cat ve 00:00 ngay do; .Ticks la moc nua dem UTC hom nay.
+        private long TodayMidnightUtcTicks => DateTime.UtcNow.Date.Ticks;
+
+        public override void ApplyPendingRegen() {
+            long todayMidnight = TodayMidnightUtcTicks;
+
+            // Lan dau (chua co moc) -> khoi tao day theo resetValue.
+            if (lastRegenUtcTicks <= 0) {
+                count = resetValue;
+                lastRegenUtcTicks = todayMidnight;
+                RaiseChange(0);
+                return;
+            }
+
+            // Da qua it nhat 1 moc nua dem ke tu lan reset cuoi -> reset.
+            if (lastRegenUtcTicks < todayMidnight) {
+                int before = count;
+                count = resetValue;
+                lastRegenUtcTicks = todayMidnight;
+                if (count != before) RaiseChange(count - before);
+            }
+        }
+
+        public override float GetSecondsUntilNext() {
+            long nextMidnight = DateTime.UtcNow.Date.AddDays(1).Ticks;
+            long remainingTicks = nextMidnight - DateTime.UtcNow.Ticks;
+            return remainingTicks <= 0 ? 0f : (float)TimeSpan.FromTicks(remainingTicks).TotalSeconds;
+        }
+    }
+}
+
+------------------------------------------------------------------
+6.5 TimedRegenManager.cs
+------------------------------------------------------------------
+using System.Collections.Generic;
+using JoyCraftSDK.SaveSystem;
+using JoyCraftSDK.Utilities;
+
+namespace JoyCraftSDK.Game {
+    /// <summary>
+    /// Manager rieng quan ly cac ATimedRegenInstance (moi RegenResourceType 1 instance).
+    /// Nap config tu ATimedRegenConfig (trong GameConfig) + state tu SavedRegenData.
+    /// Pure C# singleton (register trong ProjectScope), route API theo type.
+    /// </summary>
+    public class TimedRegenManager : ATimedRegenManager {
+        private readonly Dictionary<RegenResourceType, ATimedRegenInstance> instances = new();
+        // Chi Cooldown can service; share 1 cai cho moi cooldown instance.
+        private readonly TimedRegenService timedRegenService = new();
+        private bool isInitialized;
+
+        private SavedRegenData savedRegenData => _playerProgressData.SavedRegenData;
+
+        // Lazy init: nap instance tu config + save o lan dung dau tien (sau khi GameData san sang).
+        private void EnsureInitialized() {
+            if (isInitialized) return;
+            isInitialized = true;
+            var timedRegenConfig = _gameConfig.timedRegenConfig;
+            if (timedRegenConfig == null) return;
+            foreach (var configPoint in timedRegenConfig.GetConfigPoints()) {
+                RegisterResource(configPoint);
+            }
+        }
+
+        // Factory theo kind: dung instance dung kieu thoi gian tu 1 config point.
+        public override void RegisterResource(TimedRegenConfigPoint configPoint) {
+            if (instances.ContainsKey(configPoint.type)) return;
+            var savedRegenPoint = savedRegenData.GetOrCreatePoint(configPoint.type);
+            ATimedRegenInstance instance = configPoint.kind switch {
+                RegenKind.Cooldown => new CooldownRegenInstance(
+                    configPoint.type, configPoint.maxCount, NormalizeHardMax(configPoint),
+                    configPoint.regenSeconds, savedRegenPoint, timedRegenService),
+                RegenKind.DailyReset => new DailyResetRegenInstance(
+                    configPoint.type, configPoint.maxCount, configPoint.resetValue,
+                    savedRegenPoint),
+                _ => null
+            };
+            if (instance == null) {
+                LogError($"RegenKind.None cho {configPoint.type} — khong tao duoc instance. Set kind trong TimedRegenConfig.");
+                return;
+            }
+            instances[configPoint.type] = instance;
+        }
+
+        // hardMaxCount <= 0 hoac < maxCount -> coi nhu = maxCount (khong overfill).
+        private static int NormalizeHardMax(TimedRegenConfigPoint configPoint) {
+            return configPoint.hardMaxCount < configPoint.maxCount ? configPoint.maxCount : configPoint.hardMaxCount;
+        }
+
+        public override int GetCount(RegenResourceType type) {
+            var instance = GetInstance(type);
+            return instance == null ? 0 : instance.GetCount();
+        }
+
+        public override int GetMaxCount(RegenResourceType type) {
+            var instance = GetInstance(type);
+            return instance == null ? 0 : instance.MaxCount;
+        }
+
+        public override void Add(RegenResourceType type, int amount) {
+            GetInstance(type)?.Add(amount);
+        }
+
+        public override bool Use(RegenResourceType type, int amount) {
+            var instance = GetInstance(type);
+            return instance != null && instance.Use(amount);
+        }
+
+        public override float GetSecondsUntilNext(RegenResourceType type) {
+            var instance = GetInstance(type);
+            return instance == null ? 0f : instance.GetSecondsUntilNext();
+        }
+
+        public override void ApplyPendingRegen(RegenResourceType type) {
+            GetInstance(type)?.ApplyPendingRegen();
+        }
+
+        private ATimedRegenInstance GetInstance(RegenResourceType type) {
+            EnsureInitialized();
+            if (instances.TryGetValue(type, out var instance)) return instance;
+            LogError($"Resource {type} chua dang ky. Them vao TimedRegenConfig hoac goi RegisterResource.");
+            return null;
+        }
+    }
+
+    public abstract class ATimedRegenManager : JBase {
+        public abstract void RegisterResource(TimedRegenConfigPoint configPoint);
+        public abstract int GetCount(RegenResourceType type);
+        public abstract int GetMaxCount(RegenResourceType type);
+        public abstract void Add(RegenResourceType type, int amount);
+        public abstract bool Use(RegenResourceType type, int amount);
+        public abstract float GetSecondsUntilNext(RegenResourceType type);
+        public abstract void ApplyPendingRegen(RegenResourceType type);
+    }
+}
+
+------------------------------------------------------------------
+6.6 TimedRegenConfig.cs
+------------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using JoyCraftSDK.Utilities;
+using UnityEngine;
+
+namespace JoyCraftSDK.Game {
+    /// <summary>
+    /// Config TINH cho tung resource hoi theo thoi gian.
+    /// Designer chinh trong asset; TimedRegenManager nap luc init.
+    /// </summary>
+    [CreateAssetMenu(fileName = nameof(TimedRegenConfig),
+         menuName = GameConstants.PrototypePath + nameof(TimedRegenConfig))]
+    public class TimedRegenConfig : ATimedRegenConfig {
+        [SerializeField] private List<TimedRegenConfigPoint> configPoints = new();
+
+        public override IReadOnlyList<TimedRegenConfigPoint> GetConfigPoints() => configPoints;
+
+        public override TimedRegenConfigPoint GetConfigPoint(RegenResourceType type) {
+            foreach (var configPoint in configPoints) {
+                if (configPoint.type == type) return configPoint;
+            }
+            LogError($"No config for {type}. Check TimedRegenConfig SO.");
+            return null;
+        }
+    }
+
+    public abstract class ATimedRegenConfig : JScriptableObject {
+        public abstract IReadOnlyList<TimedRegenConfigPoint> GetConfigPoints();
+        public abstract TimedRegenConfigPoint GetConfigPoint(RegenResourceType type);
+    }
+
+    [Serializable]
+    public class TimedRegenConfigPoint {
+        public RegenResourceType type;
+        public RegenKind kind;
+        public int maxCount;
+        public int regenSeconds;   // Cooldown: chu ky hoi 1 don vi (giay).
+        public int resetValue;     // DailyReset: count sau reset (thuong = maxCount).
+        public int hardMaxCount;   // Cooldown: tran cho grant thu cong. <=0 hoac <maxCount -> = maxCount. DailyReset bo qua.
+    }
+}
+
+------------------------------------------------------------------
+6.7 SavedRegenData.cs
+------------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using JoyCraftSDK.Game;
+using JoyCraftSDK.Game.SaveData;
+using UnityEngine;
+
+namespace JoyCraftSDK.SaveSystem {
+    /// <summary>
+    /// Save data generic cho cac resource hoi theo thoi gian.
+    /// Moi resource = 1 SavedRegenPoint (type + count + last ticks).
+    /// Theo pattern list cua SavedFeatureData. La sub-data cua SavedPlayerProgressData.
+    /// </summary>
+    [Serializable]
+    public class SavedRegenData : JSaveData {
+        //INCREASE THIS WHEN YOU MAKE CHANGES TO THIS CLASS
+        public const int MaxVersion_SavedRegenData = 1;
+
+        #region Data
+
+        [SerializeField] private List<SavedRegenPoint> regenPoints = new();
+
+        #endregion
+
+        #region Overrides
+
+        public override int GetMaxVersion() {
+            return MaxVersion_SavedRegenData;
+        }
+
+        public override List<ISavableData> GetChildrenISavableData() {
+            return null;
+        }
+
+        #endregion
+
+        /// <summary>Lay point theo type; tao moi (count=0, ticks=0) neu chua co.</summary>
+        public SavedRegenPoint GetOrCreatePoint(RegenResourceType type) {
+            foreach (var regenPoint in regenPoints) {
+                if (regenPoint.type == type) return regenPoint;
+            }
+            var newPoint = new SavedRegenPoint { type = type };
+            regenPoints.Add(newPoint);
+            return newPoint;
+        }
+
+        public bool HasPoint(RegenResourceType type) {
+            foreach (var regenPoint in regenPoints) {
+                if (regenPoint.type == type) return true;
+            }
+            return false;
+        }
+    }
+}
+
+namespace JoyCraftSDK.Game.SaveData {
+    /// <summary>State duoc luu cua 1 resource hoi theo thoi gian.</summary>
+    [Serializable]
+    public class SavedRegenPoint {
+        public RegenResourceType type;
+        public int count;
+        public long lastRegenUtcTicks;
+    }
+}
+
+
+==================================================================
+7. WIRING 7 FILE SUA (snippet)                      (#7-wiring)
+==================================================================
+
+LUU Y: ten file/path o project dich co the khac chut. Tim theo y nghia
+(noi register manager, noi liet ke property manager, noi khai bao event...).
+
+------------------------------------------------------------------
+7.1 AEventManager.Gameplay.cs  (event la NESTED class trong AEventManager partial)
+------------------------------------------------------------------
+THEM (canh cac event gameplay khac). Can `using JoyCraftSDK.Game;` o dau file
+neu chua co (de thay RegenResourceType):
+
+        // Generic: 1 resource hoi theo thoi gian (TimedRegen) thay doi so luong.
+        public class OnTimedRegenChange : IEvent {
+            public RegenResourceType type;
+            public int newAmount;
+            public int changeAmount;
+        }
+
+------------------------------------------------------------------
+7.2 SavedPlayerProgressData.cs
+------------------------------------------------------------------
+THEM field (canh cac saved sub-data khac):
+        [SerializeField] private SavedRegenData savedRegenData = new();
+
+THEM vao danh sach tra ve cua GetChildrenISavableData() (giu cac phan tu cu,
+them savedRegenData vao):
+        public override List<ISavableData> GetChildrenISavableData() {
+            return new List<ISavableData> { /* ...cac cai cu... */, savedRegenData, };
+        }
+
+------------------------------------------------------------------
+7.3 SavedPlayerProgressDataFunctions.cs
+------------------------------------------------------------------
+THEM accessor (canh cac accessor saved data khac):
+        public SavedRegenData SavedRegenData => savedRegenData;
+
+------------------------------------------------------------------
+7.4 GameConfigs.cs
+------------------------------------------------------------------
+THEM field:
+        // timed regen (heart/energy/...): config max + regenSeconds cho tung resource
+        [SerializeField] public ATimedRegenConfig timedRegenConfig;
+
+------------------------------------------------------------------
+7.5 ProjectScope.cs  (noi register DI)
+------------------------------------------------------------------
+THEM (canh cac builder.Register manager khac):
+        builder.Register<TimedRegenManager>(Lifetime.Singleton).As<ATimedRegenManager>();
+
+------------------------------------------------------------------
+7.6 ProjectManagers.cs
+------------------------------------------------------------------
+THEM property (canh cac manager property khac):
+        public ATimedRegenManager TimedRegenManager { get; private set; }
+
+THEM tham so vao constructor [Inject]/Construct (cuoi danh sach param):
+            ATimedRegenManager timedRegenManager) {
+
+THEM assign trong body constructor:
+            TimedRegenManager = timedRegenManager;
+
+------------------------------------------------------------------
+7.7 JBase.cs  VA  JMonoBehaviour.cs  (ca 2 file)
+------------------------------------------------------------------
+THEM accessor (canh _resourceManager...):
+        protected ATimedRegenManager _timedRegenManager => ProjectManagers.Instance.TimedRegenManager;
+
+
+==================================================================
+8. UNITY EDITOR + VERIFY                            (#8-verify)
+==================================================================
+
+C# Unity KHONG verify nhanh duoc. Sau khi sinh code:
+  1. Bao user mo Unity Editor COMPILE — buoc verify that. Fix loi namespace/type
+     neu SDK dich khac (vd _eventBus/_playerProgressData/_gameConfig ten khac).
+  2. Tao asset: Create -> Prototype/TimedRegenConfig. Dien configPoints:
+     type + kind + maxCount + (Cooldown: regenSeconds [+hardMaxCount]) hoac
+     (DailyReset: resetValue). Gan vao GameConfigs.timedRegenConfig.
+     (Claude KHONG sua .asset duoc -> user lam trong Inspector.)
+  3. KHONG can sua prefab ProjectManagers (manager pure C# singleton, VContainer
+     tu resolve qua constructor inject).
+  4. Play scene: chac chan khong null luc inject. Test:
+     - Cooldown: GetCount -> Use -> cho -> GetCount thay hoi dung; dong/mo app van hoi.
+     - DailyReset: Use het -> doi clock may qua ngay (hoac cho 00:00 UTC) -> day lai resetValue.
+     - Overfill (neu set hardMaxCount>maxCount): Add vuot max -> GetCount tra so that;
+       regen ngu cho toi khi Use keo xuong < max.
+  5. Chay /convention-check tren cac file moi.
+
+
+==================================================================
+9. CACH THEM RESOURCE + TUONG LAI                   (#9-tuong-lai)
+==================================================================
+
+9.1 Them 1 resource moi (vd energy / daily ads):
+  - Them member vao RegenResourceType — int MOI, KHONG chen giua/tai dung.
+  - Trong asset TimedRegenConfig them 1 configPoint: type + kind + maxCount +
+    (Cooldown: regenSeconds [+hardMaxCount]) / (DailyReset: resetValue).
+  - Goi qua _timedRegenManager.GetCount/Add/Use/GetSecondsUntilNext voi type do.
+  - Khong can viet code neu dung 1 trong 2 kind san co.
+
+9.2 Cat HEART cu sang generic (KHONG bat buoc trong port nay):
+  - ResourceManager.heart* delegate sang _timedRegenManager voi
+    RegenResourceType.Heart, kind=Cooldown. Giu ResourceManager lam facade
+    (UI HeartView/Popup khong phai sua).
+  - Chuyen field heartCount/lastHeartRegenUtcTicks (SavedPlayerProgressData) sang
+    SavedRegenData. Du an dang dev: SUA THANG, KHONG bump version (theo chi dao user).
+  - Xoa HeartRegenService/AHeartRegenService (ca .meta) khi khong con dung.
+  - InfiniteHeart la buff RIENG cua heart -> de nguyen trong ResourceManager,
+    KHONG dua vao he generic. (Buff theo thoi luong = he RIENG "TimedBuff".)
+
+9.3 Buff theo thoi luong (infinite heart, x2 coin...): he RIENG song song,
+    gate boolean + expire, KHONG phai count. Khong thuoc TimedRegen.
+
+HET.

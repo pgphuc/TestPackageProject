@@ -1,0 +1,6 @@
+{
+  "defaultResponse": "console",
+  "autoApply": false,
+  "outputMode": "text",
+  "interactiveMode": false
+}

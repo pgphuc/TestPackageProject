@@ -1,0 +1,334 @@
+KE HOACH: HE TIMED BUFF (ATimedBuffInstance) — BUFF THEO THOI LUONG
+====================================================================
+Muc dich file: ke hoach dung he buff theo thoi luong (infinite heart,
+x2 coin, shield...) — SONG SONG voi he TimedRegen, KHONG ke thua no.
+Doc het muc 1-4 truoc khi viet code.
+
+TRANG THAI: 2 diem kien truc DA CHOT (xem muc 3). San sang code.
+
+
+MUC LUC
+-------
+1. Boi Canh Va Vi Sao Tach Khoi TimedRegen   (#1-boi-canh)
+2. Mo Hinh Du Lieu & API                      (#2-mo-hinh)
+3. Quyet Dinh Kien Truc Da Chot               (#3-quyet-dinh)
+4. Convention Bat Buoc                         (#4-convention)
+5. Danh Sach File                              (#5-file)
+6. Chi Tiet Tung File                          (#6-chi-tiet)
+7. Wiring (DI / Save / Event / Config)         (#7-wiring)
+8. Tich Hop Infinite Heart (Phase 2)           (#8-infinite-heart)
+9. Unity Editor + Verify                       (#9-verify)
+
+
+====================================================================
+1. BOI CANH VA VI SAO TACH KHOI TIMEDREGEN          (#1-boi-canh)
+====================================================================
+
+He TimedRegen (ATimedRegenInstance + Cooldown/DailyReset) model 1 LUONG
+(count) hoi/reset theo thoi gian: GetCount/Add/Use/maxCount.
+
+Timed buff khac BAN CHAT: khong co "count". No la 1 CONG (gate) boolean
++ 1 moc HET HAN. Vi du:
+  - Infinite heart: trong N giay, UseHeart khong tru.
+  - x2 coin / shield / boost: bat trong 1 cua so thoi gian.
+
+API GetCount/Add/Use/MaxCount VO NGHIA voi buff. => phai la he RIENG,
+khong nhet vao ATimedRegenInstance (giong ly do tach Cooldown vs DailyReset).
+
+LUU Y QUAN TRONG: buff khong tu "chan" viec tieu resource khac. Vi du
+infinite heart khong tu chan UseHeart — chinh cho TIEU heart phai hoi
+buff truoc (IsActive?). Buff system chi tra loi "dang active hay khong"
++ "con bao lau". Logic "de len" nam o consumer/facade (ResourceManager).
+
+
+====================================================================
+2. MO HINH DU LIEU & API                             (#2-mo-hinh)
+====================================================================
+
+State toi thieu cho 1 buff "cua so thoi luong": 1 timestamp het han (UTC ticks).
+  - IsActive  = DateTime.UtcNow.Ticks < expireUtcTicks
+  - Activate(durationSeconds): STACK/EXTEND tu moc con lai
+      base = IsActive ? expireUtcTicks : now;  expireUtcTicks = base + duration
+      (giong logic SetInfiniteHeart hien tai trong ResourceManager)
+  - GetRemainingSeconds(): max(0, expire - now) doi ra giay
+  - Clear(): expireUtcTicks = 0 (tat ngay)
+
+Lazy: chi tinh khi duoc hoi, khong can ticker moi frame -> dung ca khi
+app dong/suspend (giong TimedRegen). UI tu poll GetRemainingSeconds cho
+countdown, hoac nghe event OnTimedBuffChange khi Activate/Clear.
+
+LUU Y: API o muc 6 dat o ABSTRACT base (xem 3.1). Cac field/logic tren la
+cua variant dau tien (DurationBuff). Variant khac (charge-based...) co the
+override hoac mo rong rieng.
+
+
+====================================================================
+3. QUYET DINH KIEN TRUC DA CHOT                     (#3-quyet-dinh)
+====================================================================
+
+3.1 [DA CHOT] LAM ABSTRACT INSTANCE.
+  - `ATimedBuffInstance` (abstract, JBase) giu state/contract chung; subclass
+    cho tung KIEU buff. Lam ngay de mo rong nhieu loai buff khac nhau ve sau
+    (khong chi "cua so thoi luong").
+  - Variant dau: `DurationBuffInstance` (cua so het han theo thoi luong).
+  - Phan KIEU thoi gian dinh danh bang enum `BuffKind` (giong RegenKind):
+      None=0, Duration=1 (them Charge=2... khi co variant moi).
+  - Tach 2 truc giong he regen:
+      BuffType  = DINH DANH resource buff (InfiniteHeart, X2Coin...) — int serialize.
+      BuffKind  = KIEU thoi gian (Duration, ...) — quyet dinh subclass nao.
+  - Manager + Config cung A-prefix abstract (convention + DI swap).
+
+3.2 [DA CHOT] CO LAM CONFIG (TimedBuffConfig).
+  - De sau con extend (default/max duration per-type, bat/tat buff qua designer).
+  - Manager nap config luc init giong TimedRegenManager (lazy EnsureInitialized,
+    factory theo BuffKind). KHONG auto-register an.
+  - Config point toi thieu: type + kind + defaultDurationSeconds (+ maxDurationSeconds
+    tuy chon, cap khi Activate). Field se chot lai luc viet.
+
+3.3 Moc thoi gian: dung UTC xuyen suot (giong TimedRegen, chong lech clock).
+
+3.4 Stack policy khi Activate luc dang active: CONG DON (extend) — giong
+    SetInfiniteHeart hien tai. Neu muon "lay max" hay "ghi de" thi la
+    quyet dinh khac, hoi user.
+
+
+====================================================================
+4. CONVENTION BAT BUOC                               (#4-convention)
+====================================================================
+
+Doc .claude/rules/code-conventions.md + unity-safety.md. Tom tat:
+  - Dau { CUNG DONG.
+  - Moi class inherit JBase / JMonoBehaviour / JScriptableObject.
+  - KHONG Debug.Log -> Log()/LogWarning()/LogError() cua base.
+  - Enum: [Serializable] + explicit int value, member moi gan int MOI
+    (khong chen giua / tai dung — da serialize vao save).
+  - Abstract prefix A. Interface prefix I. Manager suffix Manager.
+  - Ten bien = ten class viet thuong chu dau.
+  - Namespace JoyCraftSDK.* .
+  - KHONG sua .prefab/.unity/.asset/.meta bang text (hook chan cung).
+  - C# Unity khong verify nhanh duoc -> bao user compile trong Editor.
+  - Chay /convention-check sau khi viet. Hoi confirm truoc khi Edit/Write.
+
+
+====================================================================
+5. DANH SACH FILE                                    (#5-file)
+====================================================================
+
+Thu muc de xuat: Assets/!_/TimedBuff/  (song song Assets/!_/TimedRegen/)
+
+Moi:
+  - BuffType.cs            : enum [Serializable] (None=0, InfiniteHeart=1).
+  - BuffKind.cs            : enum [Serializable] (None=0, Duration=1).
+  - TimedBuffInstance.cs   : ATimedBuffInstance (abstract, JBase) +
+                             DurationBuffInstance (concrete variant dau).
+  - TimedBuffManager.cs    : ATimedBuffManager (abstract) + TimedBuffManager
+                             (pure C# singleton, Dict<BuffType, ATimedBuffInstance>,
+                             lazy EnsureInitialized + factory theo BuffKind).
+  - TimedBuffConfig.cs     : ATimedBuffConfig (abstract JScriptableObject) +
+                             TimedBuffConfig + TimedBuffConfigPoint.
+  - SavedBuffData.cs       : SavedBuffData : JSaveData (list diem) +
+                             SavedBuffPoint (type, expireUtcTicks).
+
+Sua (wiring, additive — KHONG dung he regen):
+  - AEventManager.Gameplay.cs : them event OnTimedBuffChange.
+  - SavedPlayerProgressData.cs : them field savedBuffData = new() +
+                                 vao GetChildrenISavableData().
+  - SavedPlayerProgressDataFunctions.cs : them accessor SavedBuffData.
+  - GameConfigs.cs : them field public ATimedBuffConfig timedBuffConfig.
+  - ProjectScope.cs : Register<TimedBuffManager>().As<ATimedBuffManager>().
+  - ProjectManagers.cs : property TimedBuffManager + Construct param + assign.
+  - JBase.cs + JMonoBehaviour.cs : accessor _timedBuffManager.
+
+
+====================================================================
+6. CHI TIET TUNG FILE                                (#6-chi-tiet)
+====================================================================
+
+6.1 BuffType.cs
+    [Serializable] enum BuffType { None = 0, InfiniteHeart = 1, }
+    (Them member moi int MOI khi co buff that: X2Coin=2, Shield=3...)
+
+6.2 BuffKind.cs
+    [Serializable] enum BuffKind { None = 0, Duration = 1, }
+    (Charge = 2... khi co variant theo so lan dung.)
+
+6.3 TimedBuffInstance.cs  (namespace JoyCraftSDK.Game)
+    --- ATimedBuffInstance (abstract, JBase) — INVARIANT/CONTRACT chung ---
+    Fields chung: BuffType type; SavedBuffPoint savedBuffPoint.
+    Accessor protected: expireUtcTicks (get/set savedBuffPoint.expireUtcTicks).
+    Public: BuffType Type => type.
+    Ctor base: (BuffType type, SavedBuffPoint savedBuffPoint).
+    RaiseChange() chung (giu o base):
+      _eventBus.Raise(new OnTimedBuffChange {
+          type = type, isActive = IsActive(),
+          remainingSeconds = GetRemainingSeconds() });
+    ABSTRACT (variant):
+      bool  IsActive();
+      void  Activate(float durationSeconds);
+      float GetRemainingSeconds();
+      void  Clear();
+    (Neu thay nhieu logic dung chung giua cac variant tuong lai -> ha xuong
+     base virtual. v1 cu de abstract, DurationBuff implement.)
+
+    --- DurationBuffInstance : ATimedBuffInstance (variant "cua so thoi luong") ---
+    Ctor: (BuffType type, SavedBuffPoint savedBuffPoint) -> base(type, savedBuffPoint).
+    IsActive(): return DateTime.UtcNow.Ticks < expireUtcTicks;
+    Activate(float durationSeconds):
+      if (durationSeconds <= 0) return;
+      long now = DateTime.UtcNow.Ticks;
+      long addTicks = TimeSpan.FromSeconds(durationSeconds).Ticks;
+      long baseTicks = IsActive() ? expireUtcTicks : now;
+      expireUtcTicks = baseTicks + addTicks;
+      RaiseChange();
+    GetRemainingSeconds():
+      long remain = expireUtcTicks - DateTime.UtcNow.Ticks;
+      return remain <= 0 ? 0f : (float)TimeSpan.FromTicks(remain).TotalSeconds;
+    Clear():
+      if (expireUtcTicks == 0) return;
+      expireUtcTicks = 0; RaiseChange();
+
+6.4 TimedBuffManager.cs
+    public class TimedBuffManager : ATimedBuffManager {
+        private readonly Dictionary<BuffType, ATimedBuffInstance> instances = new();
+        private bool isInitialized;
+        private SavedBuffData savedBuffData => _playerProgressData.SavedBuffData;
+
+        private void EnsureInitialized() {
+            if (isInitialized) return;
+            isInitialized = true;
+            var timedBuffConfig = _gameConfig.timedBuffConfig;
+            if (timedBuffConfig == null) return;
+            foreach (var configPoint in timedBuffConfig.GetConfigPoints()) {
+                RegisterBuff(configPoint);
+            }
+        }
+        // Factory theo kind:
+        public override void RegisterBuff(TimedBuffConfigPoint configPoint) {
+            if (instances.ContainsKey(configPoint.type)) return;
+            var savedBuffPoint = savedBuffData.GetOrCreatePoint(configPoint.type);
+            ATimedBuffInstance instance = configPoint.kind switch {
+                BuffKind.Duration => new DurationBuffInstance(configPoint.type, savedBuffPoint),
+                _ => null
+            };
+            if (instance == null) { LogError($"BuffKind.None cho {configPoint.type}"); return; }
+            instances[configPoint.type] = instance;
+        }
+        private ATimedBuffInstance GetInstance(BuffType type) {
+            EnsureInitialized();
+            if (instances.TryGetValue(type, out var instance)) return instance;
+            LogError($"Buff {type} chua dang ky. Them vao TimedBuffConfig.");
+            return null;
+        }
+        public override bool IsActive(BuffType type) {
+            var instance = GetInstance(type); return instance != null && instance.IsActive();
+        }
+        public override void Activate(BuffType type, float durationSeconds)
+            => GetInstance(type)?.Activate(durationSeconds);
+        public override float GetRemainingSeconds(BuffType type) {
+            var instance = GetInstance(type); return instance == null ? 0f : instance.GetRemainingSeconds();
+        }
+        public override void Clear(BuffType type) => GetInstance(type)?.Clear();
+    }
+    public abstract class ATimedBuffManager : JBase {
+        public abstract void RegisterBuff(TimedBuffConfigPoint configPoint);
+        public abstract bool IsActive(BuffType type);
+        public abstract void Activate(BuffType type, float durationSeconds);
+        public abstract float GetRemainingSeconds(BuffType type);
+        public abstract void Clear(BuffType type);
+    }
+
+6.5 TimedBuffConfig.cs  (theo pattern TimedRegenConfig)
+    [CreateAssetMenu(... GameConstants.PrototypePath + nameof(TimedBuffConfig))]
+    public class TimedBuffConfig : ATimedBuffConfig {
+        [SerializeField] private List<TimedBuffConfigPoint> configPoints = new();
+        public override IReadOnlyList<TimedBuffConfigPoint> GetConfigPoints() => configPoints;
+        public override TimedBuffConfigPoint GetConfigPoint(BuffType type) { ...giong TimedRegenConfig... }
+    }
+    public abstract class ATimedBuffConfig : JScriptableObject {
+        public abstract IReadOnlyList<TimedBuffConfigPoint> GetConfigPoints();
+        public abstract TimedBuffConfigPoint GetConfigPoint(BuffType type);
+    }
+    [Serializable] class TimedBuffConfigPoint {
+        public BuffType type;
+        public BuffKind kind;
+        public int defaultDurationSeconds;   // duration mac dinh khi Activate khong truyen ro.
+        public int maxDurationSeconds;        // (tuy chon) cap tran khi stack. <=0 = khong cap.
+    }
+    (Field cuoi chot lai luc viet — tuy game can.)
+
+6.6 SavedBuffData.cs  (theo pattern SavedRegenData)
+    namespace JoyCraftSDK.SaveSystem:
+      [Serializable] class SavedBuffData : JSaveData {
+        public const int MaxVersion_SavedBuffData = 1;
+        [SerializeField] private List<SavedBuffPoint> buffPoints = new();
+        public override int GetMaxVersion() => MaxVersion_SavedBuffData;
+        public override List<ISavableData> GetChildrenISavableData() => null;
+        public SavedBuffPoint GetOrCreatePoint(BuffType type) { ...giong SavedRegenData... }
+      }
+    namespace JoyCraftSDK.Game.SaveData:
+      [Serializable] class SavedBuffPoint { public BuffType type; public long expireUtcTicks; }
+
+
+====================================================================
+7. WIRING (DI / SAVE / EVENT / CONFIG)               (#7-wiring)
+====================================================================
+
+7.1 Event (AEventManager.Gameplay.cs) — them class implement IEvent:
+    public class OnTimedBuffChange : IEvent {
+        public BuffType type; public bool isActive; public float remainingSeconds;
+    }
+    (Dat canh OnTimedRegenChange.)
+
+7.2 Save:
+    - SavedPlayerProgressData.cs: them `public SavedBuffData savedBuffData = new();`
+      va add vao GetChildrenISavableData() (giong savedRegenData).
+    - SavedPlayerProgressDataFunctions.cs: them accessor `SavedBuffData`.
+    - KHONG bump version (du an dang dev, additive — theo chi dao user).
+
+7.3 DI:
+    - ProjectScope.cs: builder.Register<TimedBuffManager>(Lifetime.Singleton)
+                       .As<ATimedBuffManager>();
+    - ProjectManagers.cs: property TimedBuffManager + Construct param + assign.
+    - JBase.cs / JMonoBehaviour.cs: accessor _timedBuffManager
+      (= ProjectManagers.Instance.TimedBuffManager) — giong _timedRegenManager.
+    - Pure C# singleton -> KHONG can sua prefab ProjectManagers.
+
+7.4 Config:
+    - GameConfigs.cs: them `public ATimedBuffConfig timedBuffConfig;`.
+    - Tao asset TimedBuffConfig (Create -> Prototype/TimedBuffConfig), dien
+      configPoints: type + kind + defaultDurationSeconds (+ maxDurationSeconds).
+      Gan vao GameConfigs.timedBuffConfig. (Claude KHONG sua .asset duoc.)
+
+
+====================================================================
+8. TICH HOP INFINITE HEART (PHASE 2)                 (#8-infinite-heart)
+====================================================================
+
+Sau khi he buff chay on, chuyen infinite heart sang dung no. ResourceManager
+GIU lam facade (UI HeartView/Popup khong phai sua):
+  - SetInfiniteHeart(duration)   -> _timedBuffManager.Activate(InfiniteHeart, duration)
+  - IsInfiniteHeartActive()      -> _timedBuffManager.IsActive(InfiniteHeart)
+  - GetInfiniteHeartRemainingSeconds() -> _timedBuffManager.GetRemainingSeconds(InfiniteHeart)
+  - UseHeart(): van check IsInfiniteHeartActive() truoc (logic "de len" nam o day).
+Di chuyen field infiniteHeartExpireUtcTicks (SavedPlayerProgressData) sang
+SavedBuffData. SUA THANG, KHONG bump version (du an dang dev — theo chi dao user).
+Xoa accessor Get/SetInfiniteHeartExpireUtcTicks cu khi khong con dung.
+
+LUU Y: OnInfiniteHeartChange (event cu) co the giu cho UI cu, hoac map sang
+OnTimedBuffChange. Quyet dinh luc lam Phase 2.
+
+
+====================================================================
+9. UNITY EDITOR + VERIFY                             (#9-verify)
+====================================================================
+
+  1. Bao user mo Unity Editor COMPILE — buoc verify that.
+  2. Tao asset TimedBuffConfig + gan vao GameConfigs.timedBuffConfig.
+  3. KHONG can sua prefab ProjectManagers (manager pure C# singleton).
+  4. Play scene: test
+     - Activate(InfiniteHeart, N) -> IsActive true; cho het N giay -> false.
+     - Dong/mo app trong khi active -> van active dung phan con lai.
+     - Activate khi dang active -> cong don (extend), khong reset.
+  5. Chay /convention-check tren cac file moi.
+
+HET.
