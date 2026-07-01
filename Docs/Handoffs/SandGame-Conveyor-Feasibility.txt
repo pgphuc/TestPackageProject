@@ -103,6 +103,22 @@ Các bước fork:
 
 Next step gợi ý: dựng plan chi tiết cho [1]+[3] (patch điểm chèn ở updatePixel dòng
 ~287, struct force-mask, wrapper spawn cát theo màu + service đếm %/màu).
+
+--------------------------------------------------------------------------------
+ 7. THUẬT NGỮ (chỉ các từ dùng trong doc này)
+--------------------------------------------------------------------------------
+- gravity-fill + drain : Cách RẺ (đã loại). Cát rơi đầy máng bằng trọng lực, rồi 1
+    lỗ đóng/mở ở đáy xả xuống lọ — không có lực đẩy ngang. Không tái tạo được push-up.
+- fork sim job         : Sửa trực tiếp bản riêng của file lõi PixelWorldSimulationJob.cs
+    (Kamgam) để nhét logic conveyor. Hệ quả: phải vá lại khi update package.
+- friction (ma sát)    : Engine tự bào mòn velocityX về 0 mỗi bước khi hạt nằm trên nền
+    (Pixel.cs:133-136). Chống conveyor → phải BƠM LẠI lực mỗi bước.
+- sleep (ngủ)          : Hạt nằm yên đủ lâu (sleepCounter>=30) bị ngừng mô phỏng để tiết
+    kiệm CPU. Chống conveyor → phải liên tục WakeUp() hạt trong vùng belt.
+- force-mask           : Bảng dữ liệu phủ lên vùng belt, mỗi ô ghi hướng đẩy hạt ở đó
+    (oval → hướng khác nhau tùy vị trí: →, ↑, ←, ↓). Sim job tra bảng để biết đẩy hướng nào.
+- prototype uphill     : Làm thử nhanh RIÊNG đoạn băng chuyền đi LÊN (cát trồi ngược trọng
+    lực) — chỗ khó/xấu nhất — để chốt game-feel trước khi dựng phần còn lại.
 ================================================================================
  HẾT
 ================================================================================
