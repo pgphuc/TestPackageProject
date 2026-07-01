@@ -1,0 +1,316 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e51d1150333fc1149bb849ae4ded950a, type: 3}
+  m_Name: Level1
+  m_EditorClassIdentifier: 
+  Level: 1
+  Scene:
+    m_AssetGUID: 36f2d76f5d4574d4ea1d5418fe874aa5
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  Materials: {fileID: 11400000, guid: 10838bc80c2464f46bebf67e59aa3251, type: 2}
+  _parts:
+  - Coordinates: {x: -3, y: -3}
+    ImageReference:
+      m_AssetGUID: d3b9419ad52f1f043b7ec1e00c1ec038
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -3, y: -2}
+    ImageReference:
+      m_AssetGUID: ae459a328987e3042a15854835643663
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -3, y: -1}
+    ImageReference:
+      m_AssetGUID: c1fd6c43143b95c4dac780dd02d1db54
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -3, y: 0}
+    ImageReference:
+      m_AssetGUID: 9710f0892ddc14f4a9d2ce390c8ec101
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -3, y: 1}
+    ImageReference:
+      m_AssetGUID: 76fc3f5354b042444af2480f6460d0c5
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -3, y: 2}
+    ImageReference:
+      m_AssetGUID: 81d5350faa5f1654d9196496f150ea9d
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -3, y: 3}
+    ImageReference:
+      m_AssetGUID: 61ada1c088d9354448384c2744809d9b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -2, y: -3}
+    ImageReference:
+      m_AssetGUID: f1706bea4017bcb40aab49b8e1b5dee7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -2, y: -2}
+    ImageReference:
+      m_AssetGUID: 7263300357fe9bb4db307b58a8272c1b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -2, y: -1}
+    ImageReference:
+      m_AssetGUID: e2a2c605526795a489eead53483c09dd
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -2, y: 0}
+    ImageReference:
+      m_AssetGUID: fe475327ce1701445bc92d10d5079c4c
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -2, y: 1}
+    ImageReference:
+      m_AssetGUID: e8fbd96a5a91f264d94c5203b13ff96b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -2, y: 2}
+    ImageReference:
+      m_AssetGUID: 73a2f240aa243f04cbd7aa13749cfad0
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -2, y: 3}
+    ImageReference:
+      m_AssetGUID: 95b904b7fb844f749b171e7be8b70cb7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -1, y: -3}
+    ImageReference:
+      m_AssetGUID: 0034b82f486cbb94188c8a51e5fe73fa
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -1, y: -2}
+    ImageReference:
+      m_AssetGUID: 3dce600e41aada74d86eea24b4c16509
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -1, y: -1}
+    ImageReference:
+      m_AssetGUID: 01ae77359d3fb5340a546c3df5d97b50
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -1, y: 0}
+    ImageReference:
+      m_AssetGUID: c4efd76591269024a834ee9543d112ff
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -1, y: 1}
+    ImageReference:
+      m_AssetGUID: 78baab65984253746adb8d636babb82e
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -1, y: 2}
+    ImageReference:
+      m_AssetGUID: 386d065c83c3b0645a185063d25a7d6d
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: -1, y: 3}
+    ImageReference:
+      m_AssetGUID: 6abef655d2702e2468e162907f1d209b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 0, y: -3}
+    ImageReference:
+      m_AssetGUID: 158b1f7d4c31f9842a08b31c3714c5a2
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 0, y: -2}
+    ImageReference:
+      m_AssetGUID: 2c1955c34c224474398ab38244c74cf4
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 0, y: -1}
+    ImageReference:
+      m_AssetGUID: 5e469f0fc049b0641bedf8e355196d5b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 0, y: 0}
+    ImageReference:
+      m_AssetGUID: a3591d41ed5f9db4a8d1e02a694c0174
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 0, y: 1}
+    ImageReference:
+      m_AssetGUID: c9e60ff88e6c94942aed634cc71ab6f5
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 0, y: 2}
+    ImageReference:
+      m_AssetGUID: 902134623b97ac74d919fd345d0f2eb1
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 0, y: 3}
+    ImageReference:
+      m_AssetGUID: d3e6da2493f9c4f4a92ecf68f5cbf26c
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 1, y: -3}
+    ImageReference:
+      m_AssetGUID: b379fd9d3021a404b81e84a6f5408d22
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 1, y: -2}
+    ImageReference:
+      m_AssetGUID: 40b3108c0232efb45922afe2ebe1be24
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 1, y: -1}
+    ImageReference:
+      m_AssetGUID: 14a82244dcec581469f59ef272f04db8
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 1, y: 0}
+    ImageReference:
+      m_AssetGUID: 69003e124088a4548b68f1559438e1f3
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 1, y: 1}
+    ImageReference:
+      m_AssetGUID: 74b25aa8c14d8ba4cbdde6a7a290f8f9
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 1, y: 2}
+    ImageReference:
+      m_AssetGUID: 773e39f2157181949ab26fb194d400e2
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 1, y: 3}
+    ImageReference:
+      m_AssetGUID: 265460db079c8fe458e9832739ed7c93
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 2, y: -3}
+    ImageReference:
+      m_AssetGUID: 8bab44a963823cc4fbf3496058c5c402
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 2, y: -2}
+    ImageReference:
+      m_AssetGUID: 89c64aa6450863e49a1a0d7e6a764238
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 2, y: -1}
+    ImageReference:
+      m_AssetGUID: 734fa340a7e14b74a89fcc16757416f6
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 2, y: 0}
+    ImageReference:
+      m_AssetGUID: 22f4285a99ee1c34189b0d1e2133325f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 2, y: 1}
+    ImageReference:
+      m_AssetGUID: 589dc211909091047a332ef5977fed0a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 2, y: 2}
+    ImageReference:
+      m_AssetGUID: 71757d175a942fb488cc02cfa7281e9a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 2, y: 3}
+    ImageReference:
+      m_AssetGUID: 0b8994b4bb022b346a3a7a91b278c293
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 3, y: -3}
+    ImageReference:
+      m_AssetGUID: 84dc6eaa14e371045823d94e6b57f13a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 3, y: -2}
+    ImageReference:
+      m_AssetGUID: cb48c4efab178434784d591eb1f54047
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 3, y: -1}
+    ImageReference:
+      m_AssetGUID: 3fbaccf19bd86754580a8190ff448601
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 3, y: 0}
+    ImageReference:
+      m_AssetGUID: d498e476988627147a48728eda159b99
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 3, y: 1}
+    ImageReference:
+      m_AssetGUID: 816ae79437fafe7468fc3a3cb909d8d8
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 3, y: 2}
+    ImageReference:
+      m_AssetGUID: 57a4588641b94b243b91ddd08cbc2cda
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+  - Coordinates: {x: 3, y: 3}
+    ImageReference:
+      m_AssetGUID: 5bff2b8f50b226e459d9280a65a47d3f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0

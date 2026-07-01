@@ -1,0 +1,433 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Sand Game Assets
+  m_EditorClassIdentifier: 
+  m_GroupName: Sand Game Assets
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 74e72d79f7d620041b9c6d653416e951
+  m_SerializeEntries:
+  - m_GUID: 36f2d76f5d4574d4ea1d5418fe874aa5
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Level1.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: d3b9419ad52f1f043b7ec1e00c1ec038
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-3_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: ae459a328987e3042a15854835643663
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-3_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: c1fd6c43143b95c4dac780dd02d1db54
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-3_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 9710f0892ddc14f4a9d2ce390c8ec101
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-3_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 76fc3f5354b042444af2480f6460d0c5
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-3_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 81d5350faa5f1654d9196496f150ea9d
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-3_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 61ada1c088d9354448384c2744809d9b
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-3_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: f1706bea4017bcb40aab49b8e1b5dee7
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-2_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 7263300357fe9bb4db307b58a8272c1b
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-2_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: e2a2c605526795a489eead53483c09dd
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-2_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: fe475327ce1701445bc92d10d5079c4c
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-2_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: e8fbd96a5a91f264d94c5203b13ff96b
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-2_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 73a2f240aa243f04cbd7aa13749cfad0
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-2_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 95b904b7fb844f749b171e7be8b70cb7
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-2_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 0034b82f486cbb94188c8a51e5fe73fa
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-1_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 3dce600e41aada74d86eea24b4c16509
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-1_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 01ae77359d3fb5340a546c3df5d97b50
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-1_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: c4efd76591269024a834ee9543d112ff
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-1_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 78baab65984253746adb8d636babb82e
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-1_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 386d065c83c3b0645a185063d25a7d6d
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-1_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 6abef655d2702e2468e162907f1d209b
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/-1_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 158b1f7d4c31f9842a08b31c3714c5a2
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/0_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 2c1955c34c224474398ab38244c74cf4
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/0_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 5e469f0fc049b0641bedf8e355196d5b
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/0_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: a3591d41ed5f9db4a8d1e02a694c0174
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/0_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: c9e60ff88e6c94942aed634cc71ab6f5
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/0_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 902134623b97ac74d919fd345d0f2eb1
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/0_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: d3e6da2493f9c4f4a92ecf68f5cbf26c
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/0_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: b379fd9d3021a404b81e84a6f5408d22
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/1_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 40b3108c0232efb45922afe2ebe1be24
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/1_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 14a82244dcec581469f59ef272f04db8
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/1_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 69003e124088a4548b68f1559438e1f3
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/1_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 74b25aa8c14d8ba4cbdde6a7a290f8f9
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/1_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 773e39f2157181949ab26fb194d400e2
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/1_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 265460db079c8fe458e9832739ed7c93
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/1_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 8bab44a963823cc4fbf3496058c5c402
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/2_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 89c64aa6450863e49a1a0d7e6a764238
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/2_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 734fa340a7e14b74a89fcc16757416f6
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/2_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 22f4285a99ee1c34189b0d1e2133325f
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/2_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 589dc211909091047a332ef5977fed0a
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/2_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 71757d175a942fb488cc02cfa7281e9a
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/2_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 0b8994b4bb022b346a3a7a91b278c293
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/2_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 84dc6eaa14e371045823d94e6b57f13a
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/3_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: cb48c4efab178434784d591eb1f54047
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/3_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 3fbaccf19bd86754580a8190ff448601
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/3_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: d498e476988627147a48728eda159b99
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/3_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 816ae79437fafe7468fc3a3cb909d8d8
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/3_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 57a4588641b94b243b91ddd08cbc2cda
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/3_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 5bff2b8f50b226e459d9280a65a47d3f
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level1/Parts/3_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 88f65c1d10b767f428c514c5b3b8755e
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Level2.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 92c22c64d2c036c4eab028ead53ca0c2
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-3_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: b78ff2644bde01f4fa4060e00d9dffe4
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-3_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 6aebce8c2982ced40806a169c2c115db
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-3_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 5a8179961b290b0409895a6f98ef48b3
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-3_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: a1811df09f84bf048a390bc0d965c7b9
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-3_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: dd95f3e572e07c54eaadacfd28824753
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-3_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: cb421758268e78b4bab83a01fe6c973e
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-3_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 35124f2a4d2f4864fa0d216580f51e88
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-2_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 08281d9e79ed42944b609db49591919d
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-2_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 8409135c2a927db44aa9bebb585a7add
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-2_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: c13b9a077a60afb4181b4c6f678f22b8
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-2_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: e1e968d6bd0c73249ba79deb46cb41c6
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-2_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 3c702c1b1cd52b54b912ae47e078d07a
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-2_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 3d4e715038333eb4aaadcd3e1280965e
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-2_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: ee671ab8ec1237648b7cad04cd6cc898
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-1_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 262bee9653b62494c9dc5a40d1938c20
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-1_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: d36b08a4369d48d49bbfe8107dc7eabe
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-1_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 710934699f4df1048b5c51932fccf88a
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-1_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: b75e9745d77ad524db96ef21839023bf
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-1_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: a7572dc06d26e5745b0e951bce304a1b
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-1_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 0352b48d97299ca4886697092bff6831
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/-1_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: f5b3a765b7de0544380d367411628871
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/0_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 82146c25aa6bf1b419db869a5770f7a9
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/0_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 9c3ed51080ea5cd459fd745c26cdb7ae
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/0_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 2baa27528fd370446af21ad81908f539
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/0_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: ff4db56420b80f64e91f415ae7eadacf
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/0_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: ad27e84b8617c494a8e99653e0d8dade
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/0_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: a43339d908abff64faa9ba540f1b1aa4
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/0_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: e7955f02d48b86a499b18c94af385299
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/1_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 32207cd72242b50409c60e53d9a7f7d6
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/1_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: f73f3ed261288874f929a05dbf49e5f0
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/1_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: e157fa3ee13f8694b80a9fb4857af816
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/1_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 55899ae401128094dab9801a8a2dd97b
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/1_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 9d882f7a6eca32941af5958f177b5539
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/1_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 2c713f909025d564db8381884495c317
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/1_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 0aef3157c65888a49b50052607782f60
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/2_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 925713bf9e306b34f8f570dc7596563e
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/2_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 8adff3643cfa0264b96fc4c4fd72230a
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/2_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 1dd8ba45b944973478566b38f5d13107
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/2_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: b2950117146a2354f9057ddf680d7433
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/2_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 85becddfaffaaa243af3f699401dbe07
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/2_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: cfd11b1e6279a834285363b828937dca
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/2_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 01ce544ae197bef4e8fb0c0cad9f5909
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/3_-3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 447c44b9f7a50af48b18921a4d363744
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/3_-2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: cb6ee2f6f51259d48b1f01c4fe981a96
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/3_-1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 8bc9d2a0f3d37fc47b363eac2be0a62c
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/3_0.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 1db0e215f0ed6394b8e2aec3f9ea06b7
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/3_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 2d22838240233fa45bc661e7f2fd7a33
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/3_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 3b98c37dd250c3c46ab0cb696434d6d7
+    m_Address: Assets/Kamgam/SandGame/Addressables/Level2/Parts/3_3.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: c14e9f4872b87194fb4292bef474fde5
+    m_Address: SandGame/Level1.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 1307cb24c0660e143b9c70c6137a9ac0
+    m_Address: SandGame/Level2.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: b75627e6c51c8764aabf9e4d96fd0951, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 257838ca56b2f9b46bbd5648f336def3, type: 2}
+    - {fileID: 11400000, guid: 1d005fb5033609744ae957db0047b9f0, type: 2}

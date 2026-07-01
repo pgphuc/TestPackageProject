@@ -1,0 +1,23 @@
+{
+    "name": "Kamgam.SandGame.PreSetup.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Kamgam.SandGame",
+        "Unity.Addressables.Editor"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.addressables",
+            "expression": "0.0.1",
+            "define": "KAMGAM_SANDGAME_ADDRESSABLES"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -1,0 +1,466 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5e1966ff79860944bfc326e4c4d0b78, type: 3}
+  m_Name: PixelMaterials
+  m_EditorClassIdentifier: 
+  _materials:
+  - id: 0
+    colorInImage:
+      serializedVersion: 2
+      rgba: 16777215
+    behaviour0: 0
+    behaviour1: 0
+    behaviour2: 0
+    behaviour3: 0
+    density: 1.2
+    friction: 0
+    gravityScale: 0
+    bouncyness: 0
+    flowSpeed: 0
+    damage: 0
+    selfDamage: 0
+    heatConductivity: 0
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 0
+    meltingTemperature: 9900900
+    liquidStateMaterialId: 0
+    boilingTemperature: 9900901
+    gasStateMaterialId: 0
+    ignitionTemperature: 9900902
+    startsAwake: 0
+    startTemperature: 0
+    startHealth: 100
+    colorStrategy: 3
+    colorDarkenChanceRatio: 0
+    color0:
+      serializedVersion: 2
+      rgba: 0
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 1
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4278190207
+    behaviour0: 1
+    behaviour1: 2
+    behaviour2: 0
+    behaviour3: 0
+    density: 9900900
+    friction: 1
+    gravityScale: 0
+    bouncyness: 0
+    flowSpeed: 0
+    damage: 0
+    selfDamage: 0
+    heatConductivity: 0
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 0
+    meltingTemperature: 9900900
+    liquidStateMaterialId: 0
+    boilingTemperature: 9900901
+    gasStateMaterialId: 0
+    ignitionTemperature: 9900902
+    startsAwake: 0
+    startTemperature: 20
+    startHealth: 9900900
+    colorStrategy: 3
+    colorDarkenChanceRatio: 0
+    color0:
+      serializedVersion: 2
+      rgba: 4278190080
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 3
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4278190080
+    behaviour0: 2
+    behaviour1: 0
+    behaviour2: 0
+    behaviour3: 0
+    density: 2700
+    friction: 1
+    gravityScale: 0
+    bouncyness: 0
+    flowSpeed: 0
+    damage: 0
+    selfDamage: 0
+    heatConductivity: 0.1
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 3
+    meltingTemperature: 700
+    liquidStateMaterialId: 9
+    boilingTemperature: 5000
+    gasStateMaterialId: 0
+    ignitionTemperature: 10000
+    startsAwake: 0
+    startTemperature: 20
+    startHealth: 1000
+    colorStrategy: 5
+    colorDarkenChanceRatio: 0.5
+    color0:
+      serializedVersion: 2
+      rgba: 4286545791
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 4
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4278255615
+    behaviour0: 11
+    behaviour1: 2
+    behaviour2: 0
+    behaviour3: 0
+    density: 1600
+    friction: 0.6
+    gravityScale: 1
+    bouncyness: 0
+    flowSpeed: 0
+    damage: 0
+    selfDamage: 0
+    heatConductivity: 0.1
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 0
+    meltingTemperature: 1000
+    liquidStateMaterialId: 0
+    boilingTemperature: 5000
+    gasStateMaterialId: 0
+    ignitionTemperature: 10000
+    startsAwake: 1
+    startTemperature: 20
+    startHealth: 500
+    colorStrategy: 2
+    colorDarkenChanceRatio: 0.3
+    color0:
+      serializedVersion: 2
+      rgba: 0
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 5
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4294901760
+    behaviour0: 12
+    behaviour1: 0
+    behaviour2: 0
+    behaviour3: 0
+    density: 1000
+    friction: 0
+    gravityScale: 1
+    bouncyness: 0
+    flowSpeed: 7
+    damage: 0
+    selfDamage: 0
+    heatConductivity: 0.1
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 0
+    meltingTemperature: 0
+    liquidStateMaterialId: 0
+    boilingTemperature: 100
+    gasStateMaterialId: 11
+    ignitionTemperature: 10000
+    startsAwake: 1
+    startTemperature: 20
+    startHealth: 100
+    colorStrategy: 1
+    colorDarkenChanceRatio: 0.5
+    color0:
+      serializedVersion: 2
+      rgba: 0
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 6
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4278202980
+    behaviour0: 2
+    behaviour1: 0
+    behaviour2: 0
+    behaviour3: 0
+    density: 700
+    friction: 1
+    gravityScale: 0
+    bouncyness: 0
+    flowSpeed: 0
+    damage: 0
+    selfDamage: 0
+    heatConductivity: 0.2
+    heatSensitivity: 0.01
+    flammable: 1
+    solidStateMaterialId: 0
+    meltingTemperature: 900900
+    liquidStateMaterialId: 0
+    boilingTemperature: 5000
+    gasStateMaterialId: 0
+    ignitionTemperature: 300
+    startsAwake: 1
+    startTemperature: 20
+    startHealth: 100
+    colorStrategy: 1
+    colorDarkenChanceRatio: 0.5
+    color0:
+      serializedVersion: 2
+      rgba: 0
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 7
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4278222847
+    behaviour0: 12
+    behaviour1: 0
+    behaviour2: 0
+    behaviour3: 0
+    density: 900
+    friction: 0
+    gravityScale: 1
+    bouncyness: 0
+    flowSpeed: 2
+    damage: 0
+    selfDamage: 0
+    heatConductivity: 0.9
+    heatSensitivity: 0.05
+    flammable: 1
+    solidStateMaterialId: 0
+    meltingTemperature: 0
+    liquidStateMaterialId: 0
+    boilingTemperature: 120
+    gasStateMaterialId: 0
+    ignitionTemperature: 150
+    startsAwake: 1
+    startTemperature: 20
+    startHealth: 200
+    colorStrategy: 0
+    colorDarkenChanceRatio: 0.5
+    color0:
+      serializedVersion: 2
+      rgba: 0
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 8
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4278255360
+    behaviour0: 12
+    behaviour1: 30
+    behaviour2: 0
+    behaviour3: 0
+    density: 990
+    friction: 0
+    gravityScale: 1
+    bouncyness: 0
+    flowSpeed: 1
+    damage: 2000
+    selfDamage: 0
+    heatConductivity: 0.1
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 0
+    meltingTemperature: 0
+    liquidStateMaterialId: 0
+    boilingTemperature: 0
+    gasStateMaterialId: 0
+    ignitionTemperature: 100
+    startsAwake: 1
+    startTemperature: 20
+    startHealth: 1000
+    colorStrategy: 0
+    colorDarkenChanceRatio: 0.5
+    color0:
+      serializedVersion: 2
+      rgba: 0
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 9
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4278190335
+    behaviour0: 12
+    behaviour1: 40
+    behaviour2: 0
+    behaviour3: 0
+    density: 2500
+    friction: 0
+    gravityScale: 1
+    bouncyness: 0
+    flowSpeed: 1
+    damage: 1000
+    selfDamage: 0
+    heatConductivity: 0.3
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 3
+    meltingTemperature: 700
+    liquidStateMaterialId: 9
+    boilingTemperature: 10000
+    gasStateMaterialId: 0
+    ignitionTemperature: 5000
+    startsAwake: 1
+    startTemperature: 2300
+    startHealth: 5000
+    colorStrategy: 0
+    colorDarkenChanceRatio: 0.5
+    color0:
+      serializedVersion: 2
+      rgba: 0
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 10
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4294967295
+    behaviour0: 11
+    behaviour1: 2
+    behaviour2: 0
+    behaviour3: 0
+    density: 200
+    friction: 0.6
+    gravityScale: 0.5
+    bouncyness: 0
+    flowSpeed: 0
+    damage: 1
+    selfDamage: 0
+    heatConductivity: 0.05
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 10
+    meltingTemperature: 0
+    liquidStateMaterialId: 5
+    boilingTemperature: 100
+    gasStateMaterialId: 11
+    ignitionTemperature: 10000
+    startsAwake: 1
+    startTemperature: -10
+    startHealth: 100
+    colorStrategy: 0
+    colorDarkenChanceRatio: 0
+    color0:
+      serializedVersion: 2
+      rgba: 0
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
+  - id: 11
+    colorInImage:
+      serializedVersion: 2
+      rgba: 4294967040
+    behaviour0: 13
+    behaviour1: 0
+    behaviour2: 0
+    behaviour3: 0
+    density: 0.6
+    friction: 0
+    gravityScale: 0
+    bouncyness: 0
+    flowSpeed: 7
+    damage: 0
+    selfDamage: 20
+    heatConductivity: 0.1
+    heatSensitivity: 0
+    flammable: 0
+    solidStateMaterialId: 0
+    meltingTemperature: 0
+    liquidStateMaterialId: 0
+    boilingTemperature: 100
+    gasStateMaterialId: 0
+    ignitionTemperature: 10000
+    startsAwake: 1
+    startTemperature: 100
+    startHealth: 100
+    colorStrategy: 3
+    colorDarkenChanceRatio: 0.5
+    color0:
+      serializedVersion: 2
+      rgba: 4294967167
+    color1:
+      serializedVersion: 2
+      rgba: 0
+    color2:
+      serializedVersion: 2
+      rgba: 0
+    color3:
+      serializedVersion: 2
+      rgba: 0
