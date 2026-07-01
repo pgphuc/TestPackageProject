@@ -1,0 +1,301 @@
+================================================================================
+ KAMGAM SAND GAME — KIẾN TRÚC KỸ THUẬT
+================================================================================
+Package  : Kamgam SandGame (third-party asset)
+Vị trí   : Assets/Kamgam/SandGame/
+Namespace: Kamgam.SandGame
+Loại     : Falling-sand / pixel-physics engine (kiểu "Noita"), mỗi hạt = 1 pixel
+           có vật lý riêng, chạy đa luồng bằng Unity Job System + Burst.
+
+⚠ LƯU Ý: Đây là asset THIRD-PARTY, KHÔNG thuộc jsdk framework.
+   - KHÔNG theo convention JBase/JMonoBehaviour/JScriptableObject của repo.
+   - KHÔNG dùng Log() wrapper, dùng struct + NativeArray (data-oriented), không OOP.
+   - Đừng áp convention jsdk lên code trong package này; chỉ đọc/tích hợp.
+
+
+--------------------------------------------------------------------------------
+ MỤC LỤC
+--------------------------------------------------------------------------------
+ 1. Tổng quan & luồng dữ liệu 1 frame
+ 2. Tầng điều phối (MonoBehaviour trong scene)
+ 3. Tầng lõi mô phỏng (plain C# class)
+ 4. Tầng dữ liệu (struct Burst-compatible)
+ 5. Tầng Jobs (Burst — nơi tính toán thật)
+ 6. Tầng Level / Asset (ScriptableObject + Addressables)
+ 7. UI / Utils / Editor / Tích hợp
+ 8. Điểm kiến trúc đáng chú ý
+ 9. Bảng ánh xạ đối tượng → file
+
+
+--------------------------------------------------------------------------------
+ 1. TỔNG QUAN & LUỒNG DỮ LIỆU 1 FRAME
+--------------------------------------------------------------------------------
+Engine mô phỏng các pixel rời rạc (cát/nước/lửa/khí...). Mỗi pixel là 1 struct
+trong NativeArray, được xử lý song song bằng Burst job. Kết quả mô phỏng được vẽ
+vào MỘT texture duy nhất rồi hiển thị lên quad khớp camera.
+
+Luồng xử lý mỗi frame (trong PixelWorld.LateUpdateAfterCode):
+
+   Chunks (lưu trữ dài hạn, lưới quanh camera)
+        │  copyChunksToBuffer()   (PixelWorldCopyFromChunkToBufferJob)
+        ▼
+   SimulationBuffer (vùng ~2.5× viewport + margin 20px quanh camera)
+        │  simulateInBuffer()     (PixelWorldSimulationJob — đa luồng, 3 pha)
+        ▼
+   SimulationBuffer (đã cập nhật)
+        │  copyBufferToChunks()   (PixelWorldCopyFromBufferToChunkJob)
+        ▼
+   Chunks
+        │  Canvas.CopyPixelsToColorBuffer... (ChunkToCanvasJob)
+        ▼
+   PixelCanvas.Texture2D  ──► MeshRenderer (hiển thị)
+        │  updateWorldColliders() (PixelWorldColliderJob)
+        ▼
+   PolygonCollider2D (cho vật lý Unity 2D tương tác với thế giới pixel)
+
+Mô phỏng chạy theo FIXED-TIMESTEP (mặc định 60fps), tách rời render: mỗi frame
+có thể chạy 0, 1 hoặc N bước mô phỏng (giống FixedUpdate) để vật lý nhất quán.
+
+
+--------------------------------------------------------------------------------
+ 2. TẦNG ĐIỀU PHỐI (MonoBehaviour trong scene)
+--------------------------------------------------------------------------------
+SandGame
+   - Demo controller / entry point. Xử lý input chuột & touch để vẽ pixel,
+     load level, di chuyển camera (WASD/arrow), quản lý UI (Loading/Menu/Game).
+   - Đây là VÍ DỤ cách dùng engine; game thật có thể thay bằng controller riêng.
+   - Sync target frame rate với simulation frame rate (Android 30, khác 60).
+
+SandWorld
+   - Cầu nối Scene ↔ Engine. "BehaviourController" điều phối vòng update.
+   - Chứa PixelCanvas + PixelWorld. Config: Width/Height/PixelsPerUnit,
+     _simulationFrameRate, WorldTemperature, Collider, Camera.
+   - Khởi tạo PixelWorld ở Start(); gọi PixelWorld.LateUpdateAfterCode() ở
+     LateUpdate() (mọi mô phỏng chạy SAU code gameplay).
+   - Load Unity scene phụ của mỗi level qua Addressables (additive).
+
+PixelCanvas
+   - Render target. Ghi màu pixel vào NativeArray<byte> → Texture2D
+     (RGBA32, FilterMode.Point, không mipmap) → gán vào MeshRenderer.
+   - MatchCamera(): scale & đặt quad khớp orthographic camera.
+   - Stabilizer: transform con để bù trừ sub-pixel khi camera di chuyển
+     mượt (chống giật khi viewport lệch phần thập phân của pixel).
+
+DynamicObject  (CHƯA HOÀN THIỆN)
+   - Placeholder để chuyển GameObject Unity → biểu diễn pixel trước mô phỏng.
+   - Mỗi Pixel đã có sẵn dynamicObjectId + u,v để hỗ trợ tính năng này sau.
+
+
+--------------------------------------------------------------------------------
+ 3. TẦNG LÕI MÔ PHỎNG (plain C# class)
+--------------------------------------------------------------------------------
+PixelWorld  (partial: PixelWorld.cs, .Draw.cs, .Colliders.cs)
+   - Trái tim engine. Quản lý:
+     * Lưới chunk vô hạn quanh camera (load/unload theo vị trí viewport).
+     * Cấp phát simulation buffer (SimulationBufferScale = 2.5×2.5,
+       SimulationMargin = 20px — vừa là vùng đọc/ghi biên, vừa giới hạn
+       khoảng cách 1 pixel di chuyển trong 1 frame).
+     * Điều phối 3 pha job: copy-vào-buffer → simulate → copy-ra-chunk.
+     * Fixed-timestep (FrameRate, FixedDeltaTime, LimitToApplicationFrameRate).
+     * Chuyển đổi tọa độ: pixel ↔ world ↔ screen ↔ viewport ↔ transform.
+     * .Draw.cs: DrawBrushAt / DrawLine (vẽ pixel bằng brush).
+     * .Colliders.cs: dựng PolygonCollider2D từ outline pixel rắn.
+
+PixelWorldChunk
+   - Ô chữ nhật (~1 màn hình) chứa NativeArray<Pixel>, layout hàng-theo-hàng
+     từ dưới-trái. Load lazy từ ảnh PNG (LoadFromImage → LevelInfo).
+   - Toạ độ logic (X,Y) vs toạ độ pixel (XMin/YMin = X*Width...).
+   - API get/set pixel theo world-pos hoặc chunk-pos.
+
+PixelWorldChunkCache
+   - Cache/tra cứu chunk đã tạo theo toạ độ logic (GetOrCreate,
+     GetOrCreateByPixelPos, CountLoadedChunks).
+
+
+--------------------------------------------------------------------------------
+ 4. TẦNG DỮ LIỆU (struct Burst-compatible)
+--------------------------------------------------------------------------------
+Pixel  (struct, [BurstCompile])
+   - Đơn vị mô phỏng. Fields chính:
+     * materialIndex (tra vào bảng PixelMaterial)
+     * hasValue / isLoaded / isFreeFalling / isSliding  (byte thay bool vì
+       IL2CPP + Burst không thích bool)
+     * sleepCounter (>=30 = ngủ, không mô phỏng), simulationScheduled
+     * x, y (vị trí pixel), deltaX/Y (tích luỹ dịch chuyển), velocityX/Y (m/s)
+     * health, temperature (°C), dynamicObjectId, u, v
+     * r, g, b, a (màu)
+   - Chứa LOGIC vật lý per-pixel: ApplyFriction, ApplyVelocityToPositionDelta,
+     Burn, ChangeTemperatureBy (đổi pha rắn/lỏng/khí theo nhiệt), IsDenserThan,
+     IsCombinableWith (ăn mòn), IsAffectedByGravity...
+
+PixelMaterial  (struct, [BurstCompile])
+   - Định nghĩa vật liệu (data-driven):
+     * id (PixelMaterialId), tối đa 4 PixelBehaviour
+     * density, friction, gravityScale, bouncyness, flowSpeed
+     * damage, selfDamage (dmg/giây)
+     * Nhiệt: heatConductivity, heatSensitivity, flammable, ignitionTemperature
+     * Đổi pha: meltingTemperature/boilingTemperature + solid/liquid/gas
+       StateMaterialId (chuyển sang material id khác khi qua ngưỡng nhiệt)
+     * Colorization: colorStrategy (FromImage / Darken / Color0...) + color0..3
+   - SetPixelColors(), HasBehaviour(), IsMovable(), IsFlammable()...
+
+PixelBehaviour  (enum)  — "tính cách" của material (logic):
+   None, Static, Solid, MoveLikeSand, MoveLikeLiquid, MoveLikeGas,
+   CombineByCorrosion (axit gộp pixel khác), HeatTransfer (truyền nhiệt).
+
+PixelMaterialId  (enum)  — danh mục vật liệu, gán int tường minh:
+   Empty=0, Static=1, Rock=3, Sand=4, Water=5, Wood=6, Oil=7, Acid=8,
+   Lava=9, Snow=10, Steam=11. (Thêm loại mới ở cuối.)
+
+PixelFactory
+   - Tạo Pixel mới từ một material id + toạ độ.
+
+
+--------------------------------------------------------------------------------
+ 5. TẦNG JOBS (Burst — nơi tính toán thật)
+--------------------------------------------------------------------------------
+PixelWorldSimulationJob (+ .Utils, .MovementUtils, .Debug)
+   - Luật vật lý cát/nước/khí/lửa/ăn mòn/truyền nhiệt/đổi pha.
+   - Buffer chia thành các lát DỌC (theo x); chạy xen kẽ 3 PHA để 2 thread
+     cạnh nhau không cùng ghi vào pixel biên (tránh race). HorizontalOrder
+     đảo chiều mỗi frame để mô phỏng đối xứng.
+
+PixelWorldCopyFromChunkToBufferJob / ...FromBufferToChunkJob
+   - Chuyển dữ liệu Chunk ↔ SimulationBuffer (đa luồng, chia theo lát).
+
+ChunkToCanvasJob
+   - Copy màu pixel từ chunk ra colorBuffer của PixelCanvas.
+
+InitEmptyChunkJob
+   - Khởi tạo chunk rỗng.
+
+LevelPartImageToChunkJob
+   - Nạp ảnh PNG (Color32) → Pixel + gán material theo màu.
+
+PixelWorldColliderJob
+   - Sinh path outline từ pixel rắn để dựng PolygonCollider2D.
+
+JobUtils / JobAwaiter
+   - JobUtils: đếm processor, batch size, seed random, WaitForJobs.
+   - JobAwaiter: quản lý vòng đời async (addressable load ảnh → chunk).
+
+
+--------------------------------------------------------------------------------
+ 6. TẦNG LEVEL / ASSET (ScriptableObject + Addressables)
+--------------------------------------------------------------------------------
+LevelInfo  (ScriptableObject, partial + .StaticAPI)
+   - Mô tả 1 level: Level (int), Scene (SceneAssetReference — scene phụ
+     addressable), Materials (PixelMaterials), _parts (List<LevelPart>).
+   - StaticAPI: registry level đang load, LoadImageIntoChunk, JobAwaiter.
+
+LevelPart  (partial + .StaticAPI)
+   - 1 mảnh ảnh PNG có toạ độ (vd Parts/-2_3.png) ánh xạ vào 1 chunk.
+   - Level = lưới nhiều ảnh PNG ghép lại (streaming từng phần).
+
+PixelMaterials  (ScriptableObject)
+   - Bảng tra vật liệu của level: PixelMaterial[] → build NativeArray<PixelMaterial>
+     (NativeMaterials) cấp cho job. GetById / GetIndex theo PixelMaterialId.
+   - EnsureValidMaterials: đảm bảo phần tử [0] là material rỗng không behaviour.
+
+SceneAssetReference
+   - AssetReference con, validate đuôi .unity cho scene addressable.
+
+Addressables trong package: Level1, Level2 (mỗi level = 1 SO + 1 scene .unity
++ thư mục Parts/ chứa các PNG toạ độ x_y).
+
+
+--------------------------------------------------------------------------------
+ 7. UI / UTILS / EDITOR / TÍCH HỢP
+--------------------------------------------------------------------------------
+UI:
+   InGameMenu     — HUD trong game.
+   MaterialButton — nút chọn vật liệu để vẽ (đổi DrawingMaterialId).
+
+Utils:
+   JobUtils, JobAwaiter, DebugTexture (vẽ debug), EditorScripts/Logger.
+
+Editor:
+   LevelEditor          — vẽ level bằng brush trong editor.
+   LevelInfoEditor      — custom inspector cho LevelInfo.
+   Setup/Installer, AddressablesSetup, SceneSetup, MaterialShaderFixer,
+   VersionHelper        — tự động cài đặt & fix khi import.
+   FirstSceneAutoLoader, LevelEditorBuildProcessor, CrossCompileCallbacks.
+
+3rdParty/PlayMaker:
+   Bộ Action không-cần-code: SandWorldDrawBrushAt, SandWorldDrawLine,
+   GetSandWorldFromScene..., SandWorldObjectCompare... + wrapper object.
+
+SandGamePreSetup/ : gói .unitypackage cài đặt sẵn (import 1 lần).
+
+
+--------------------------------------------------------------------------------
+ 8. ĐIỂM KIẾN TRÚC ĐÁNG CHÚ Ý
+--------------------------------------------------------------------------------
+1. CHUNK STREAMING vô hạn quanh camera: chỉ mô phỏng vùng ~2.5× màn hình,
+   chunk ngoài tầm bị unload khỏi ActiveChunks → hỗ trợ level rất lớn.
+
+2. FIXED-TIMESTEP tách rời render: mô phỏng chạy 0/1/N lần mỗi frame để vật lý
+   nhất quán ở 60fps, bất kể FPS thực. LimitToApplicationFrameRate giữ đồng bộ.
+
+3. DATA-ORIENTED: Pixel/PixelMaterial là struct trong NativeArray, xử lý bằng
+   Burst job đa luồng — KHÔNG phải OOP GameObject-per-pixel (nếu không sẽ chết
+   performance với hàng trăm nghìn pixel).
+
+4. CHIA PHA 3 LUỒNG XEN KẼ: tránh 2 thread cùng ghi vào pixel biên. Lát dọc,
+   pha 0/1/2 chạy tuần tự, mỗi pha các lát không kề nhau chạy song song.
+
+5. MATERIAL-DRIVEN: hành vi (cháy, chảy, đổi pha, ăn mòn, truyền nhiệt) config
+   qua ScriptableObject + enum behaviour, KHÔNG hardcode → dễ thêm vật liệu.
+
+6. SUB-PIXEL STABILIZATION: PixelCanvas.Stabilizer bù phần thập phân của
+   viewport để camera di chuyển mượt trên lưới pixel rời rạc.
+
+7. MÔ PHỎNG VẬT LÝ THẬT: dùng SI units (density kg/m³, nhiệt °C, gravity 9.81),
+   friction kiểu PhysicMaterial, đổi pha theo nhiệt độ nóng chảy/sôi.
+
+
+--------------------------------------------------------------------------------
+ 9. BẢNG ÁNH XẠ ĐỐI TƯỢNG → FILE
+--------------------------------------------------------------------------------
+Điều phối:
+   SandGame ............... Scripts/Runtime/SandGame.cs
+   SandWorld .............. Scripts/Runtime/SandWorld.cs
+   PixelCanvas ............ Scripts/Runtime/PixelCanvas/PixelCanvas.cs
+   DynamicObject .......... Scripts/Runtime/DynamicWorld/DynamicObject.cs
+
+Lõi mô phỏng:
+   PixelWorld ............. Scripts/Runtime/PixelWorld/PixelWorld.cs
+                           PixelWorld.Draw.cs / PixelWorld.Colliders.cs
+   PixelWorldChunk ....... Scripts/Runtime/PixelWorld/PixelWorldChunk.cs
+   PixelWorldChunkCache .. Scripts/Runtime/PixelWorld/PixelWorldChunkCache.cs
+
+Dữ liệu:
+   Pixel ................. Scripts/Runtime/PixelWorld/Pixel.cs
+   PixelMaterial ......... Scripts/Runtime/PixelWorld/PixelMaterial.cs
+   PixelBehaviour ........ Scripts/Runtime/PixelWorld/PixelBehaviour.cs
+   PixelMaterialId ....... Scripts/Runtime/PixelWorld/PixelMaterialId.cs
+   PixelFactory .......... Scripts/Runtime/PixelWorld/PixelFactory.cs
+
+Jobs:
+   PixelWorldSimulationJob ...... Scripts/Runtime/PixelWorld/PixelWorldSimulationJob*.cs
+   PixelWorldCopyFrom*Job ....... Scripts/Runtime/PixelWorld/PixelWorldCopyFrom*.cs
+   PixelWorldColliderJob ........ Scripts/Runtime/PixelWorld/PixelWorldColliderJob.cs
+   InitEmptyChunkJob ............ Scripts/Runtime/PixelWorld/InitEmptyChunkJob.cs
+   ChunkToCanvasJob ............. Scripts/Runtime/PixelCanvas/ChunkToCanvasJob.cs
+   LevelPartImageToChunkJob ..... Scripts/Runtime/PixelWorld/LevelLoading/LevelPartImageToChunkJob.cs
+
+Level / Asset:
+   LevelInfo ............. Scripts/Runtime/PixelWorld/LevelLoading/LevelInfo.cs (+ .StaticAPI)
+   LevelPart ............. Scripts/Runtime/PixelWorld/LevelLoading/LevelPart.cs (+ .StaticAPI)
+   PixelMaterials ........ Scripts/Runtime/PixelWorld/LevelLoading/PixelMaterials.cs
+
+UI / Utils:
+   InGameMenu / MaterialButton .. Scripts/Runtime/UI/
+   JobUtils / JobAwaiter ........ Scripts/Runtime/
+
+Editor: Editor/  và  Scripts/Runtime/EditorScripts/
+PlayMaker: 3rdParty/PlayMaker/
+
+================================================================================
+ HẾT
+================================================================================
