@@ -1,0 +1,108 @@
+================================================================================
+ SAND OUT — CONVEYOR (BĂNG CHUYỀN CÁT) : ĐÁNH GIÁ KHẢ THI TRÊN KAMGAM SANDGAME
+================================================================================
+Loại     : Handoff / decision note (đọc để quyết ở session khác — self-contained)
+Engine   : Kamgam SandGame (third-party) @ Assets/Kamgam/SandGame/
+Tham chiếu doc: Docs/SandGame-Architecture.txt, Docs/SandGame-Pixel-And-Movement.txt
+Nguồn tham khảo gameplay: video "Sand Out" (YT Shorts) — falling-sand puzzle dọc.
+
+--------------------------------------------------------------------------------
+ 0. TÓM TẮT 1 DÒNG
+--------------------------------------------------------------------------------
+Vật lý cát rơi/trộn/chảy quanh vật cản = ĐÚNG NGHỀ engine (free). Nhưng CONVEYOR
+(cát đi ngang + đoạn đẩy LÊN ngược trọng lực) engine KHÔNG có sẵn → phải FORK sim
+job để thêm "force-zone / conveyor". Mover đã honor velocityX nên hạ tầng có sẵn,
+chỉ thiếu nguồn lực ngang + lực đẩy lên.
+
+--------------------------------------------------------------------------------
+ 1. GAME LOGIC ĐÃ CHỐT (theo yêu cầu user)
+--------------------------------------------------------------------------------
+- Đáy màn là 1 băng chuyền hình oval (loop) chạy quanh, ở giữa là vùng % / vật cản.
+- Dưới băng chuyền có các "lọ" (jar) màu.
+- LUẬT:
+  * Cát CÙNG màu với lọ ngay bên dưới  → BỎ QUA conveyor, chảy THẲNG xuống lọ.
+  * Cát KHÁC màu                        → tiếp tục chạy trên băng chuyền, đi vòng;
+    đến ĐOẠN ĐI LÊN có LỰC ĐẨY LÊN (push-up, quan sát rõ trong video).
+=> Đây là CONVEYOR CƯỠNG BỨC THẬT (không phải ảo giác gravity-fill). Phương án rẻ
+   "gravity-fill + drain" ĐÃ BỊ LOẠI vì cần đẩy cát đi ngang và LÊN ngược trọng lực.
+
+--------------------------------------------------------------------------------
+ 2. ENGINE THỰC TẾ NÓI GÌ (bằng chứng từ source, đã đọc)
+--------------------------------------------------------------------------------
+File: Assets/Kamgam/SandGame/Scripts/Runtime/PixelWorld/PixelWorldSimulationJob.cs
+- Lực DUY NHẤT = trọng lực, thẳng đứng, hardcode:
+    dòng 284:  velocityY -= 9.81 * FixedDeltaTime * material.gravityScale
+    dòng 285:  velocityX chỉ bị CLAMP, KHÔNG có chỗ nào cộng vận tốc ngang.
+- Mover CÓ chuyển ngang theo velocity (hạ tầng có sẵn):
+    dòng 290:  ApplyVelocityToPositionDelta  →  deltaX += velocityX*dt*ppu
+               (Pixel.cs:118-121). |delta|>=1 thì tryTravelBy kéo pixel sang ngang.
+- HAI thứ chống lại conveyor:
+    * FRICTION giết velocityX về 0 mỗi bước khi cát nằm trên nền (Pixel.cs:133-136).
+    * SLEEP: cát lắng → sleepCounter>=30 → NGỦ, ngừng mô phỏng (phải liên tục WakeUp).
+- Sand tự nhiên chỉ đi XUỐNG + CHÉO-XUỐNG (moveSand, dòng 310+). KHÔNG tự đi ngang/lên.
+- Không có khái niệm conveyor / wind / force-field / external force ở bất kỳ đâu.
+
+Helper vận tốc PUBLIC có sẵn trên struct Pixel (Pixel.cs) — dùng được khi fork:
+    SetVelocityX/Y, SetVelocityDirectionX/Y, StartFreeFalling, WakeUp, HasVelocity,
+    ApplyVelocityToPositionDelta.
+
+--------------------------------------------------------------------------------
+ 3. PHẢI XÂY GÌ ĐỂ CÓ CONVEYOR (khuyến nghị: FORK sim job)
+--------------------------------------------------------------------------------
+Cơ chế: bơm lực cho pixel trong "vùng belt" MỖI BƯỚC SIM (per-pixel, per-step).
+Chỉ làm sạch được khi sửa bên trong Burst job — KHÔNG làm gọn từ code game ngoài
+(ghi có độ trễ 1 frame, không chạy per-pixel per-step, friction+sleep phá → xấu).
+
+Các bước fork:
+ (a) Truyền vào PixelWorldSimulationJob 1 NativeArray "force mask" (per-cell hướng
+     belt: encode vector, hoặc 4 hướng: →, ↑, ←, ↓ cho oval loop).
+ (b) Trong updatePixel (ngay SAU đoạn gravity, dòng ~287), nếu pixel ở trong zone:
+       - pixel.SetVelocityX(dir * beltSpeed)   (hoặc cộng dồn)
+       - ĐOẠN ĐI LÊN: bơm thêm velocityY dương ĐỦ THẮNG 9.81*gravityScale (push-up)
+       - giữ WakeUp()/reset sleepCounter để không ngủ.
+     Vì friction bào mòn mỗi bước → BƠM LẠI mỗi bước là đúng, không sao. Chi phí rẻ
+     (nằm trong Burst job).
+ (c) CỔNG BYPASS THEO MÀU: tại điểm phía trên mỗi lọ, nếu Pixel.materialIndex (màu)
+     KHỚP màu lọ → KHÔNG áp lực conveyor + mở lỗ thoát (pixel rắn được gỡ) để cát
+     rơi thẳng vào lọ bằng trọng lực. Nếu KHÁC → giữ lực conveyor để cát đi tiếp.
+     (Màu/vật liệu tra qua PixelMaterialId; xem doc Pixel-And-Movement §2.)
+
+--------------------------------------------------------------------------------
+ 4. RỦI RO / ĐIỂM CẦN THỬ NGHIỆM SỚM
+--------------------------------------------------------------------------------
+- ĐOẠN ĐI LÊN là chỗ KHÓ/XẤU nhất: đẩy velocityY ngược trọng lực dễ trông giả,
+  cát có thể "phun"/rối. Cần tinh chỉnh beltSpeed vs gravityScale vs friction.
+  → PROTOTYPE đoạn uphill TRƯỚC TIÊN để xác nhận game-feel.
+- Fork = own 1 nhánh sửa package third-party. Ghi chú lại patch để re-apply khi
+  update Kamgam. KHÔNG áp convention jsdk (JBase/Log()) lên code trong package;
+  wrapper tích hợp bên ngoài mới viết theo jsdk.
+- Sleep/awake: nếu quên giữ thức, cát trên belt sẽ đơ. Verify bằng play scene.
+- Performance: fork nằm trong Burst multithread + grid 1 màn nhỏ → dư sức mobile.
+- Verify THẬT = compile + play trong Unity Editor (không có tsc/npm test cho C# Unity).
+
+--------------------------------------------------------------------------------
+ 5. LỚP GAME-LAYER PHẢI TỰ VIẾT (engine không lo) — nhắc lại cho đủ
+--------------------------------------------------------------------------------
+- Đếm cát theo màu trong vùng để tính % + điều kiện thắng (đọc pixel on-demand,
+  KHÔNG mỗi frame). Engine cho TryGetPixelAt / dữ liệu chunk.
+- Meta puzzle: hàng đợi cube màu, spawn cát (WakeUp + StartFreeFalling / DrawBrushAt
+  với PixelMaterialId), match màu→lọ, win/lose, booster (Hammer breaks a cube).
+- Bố cục 1 màn cố định: khoá vùng sim vào board (engine mặc định chunk-streaming vô
+  hạn kiểu Noita — thừa cho puzzle 1 screen).
+- Độ "thô" hạt: chỉnh PixelsPerUnit / độ phân giải sim cho ra cỡ hạt mong muốn.
+
+--------------------------------------------------------------------------------
+ 6. QUYẾT ĐỊNH CẦN CHỐT Ở SESSION SAU
+--------------------------------------------------------------------------------
+ [1] Đồng ý FORK PixelWorldSimulationJob thêm force-zone/conveyor? (yes → đúng hướng
+     duy nhất cho conveyor cưỡng bức có push-up.)
+ [2] Cách biểu diễn force mask: 4-hướng đơn giản hay vector-field đầy đủ cho oval?
+ [3] Prototype đoạn UPHILL trước để chốt game-feel — OK chưa?
+ [4] Cơ chế cổng bypass theo màu: mở lỗ thoát (gỡ pixel rắn) hay tắt lực conveyor
+     cục bộ tại miệng lọ — chọn cái nào?
+
+Next step gợi ý: dựng plan chi tiết cho [1]+[3] (patch điểm chèn ở updatePixel dòng
+~287, struct force-mask, wrapper spawn cát theo màu + service đếm %/màu).
+================================================================================
+ HẾT
+================================================================================
