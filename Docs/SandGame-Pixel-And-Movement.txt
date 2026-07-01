@@ -1,0 +1,207 @@
+================================================================================
+ KAMGAM SAND GAME — PIXEL INSTANCE, ĐỊNH NGHĨA "SAND", & API DI CHUYỂN
+================================================================================
+Package  : Kamgam SandGame (third-party asset)
+Vị trí   : Assets/Kamgam/SandGame/
+Namespace: Kamgam.SandGame
+Mục tiêu : Tổng hợp 3 câu hỏi cốt lõi khi build game "ảnh sand + swipe cho rơi":
+           1. Class/struct nào là 1 pixel instance?
+           2. Struct nào quyết định đó là 1 SAND pixel?
+           3. Các API để di chuyển 1 sand pixel?
+
+⚠ LƯU Ý: Code third-party, data-oriented (struct + NativeArray + Burst job),
+   KHÔNG theo convention jsdk. Chỉ đọc/tích hợp, đừng áp luật JBase lên nó.
+
+
+--------------------------------------------------------------------------------
+ MỤC LỤC
+--------------------------------------------------------------------------------
+ 1. Pixel instance = struct Pixel (KHÔNG phải class)
+ 2. Struct quyết định "là sand" = PixelMaterial + enum PixelBehaviour
+ 3. API di chuyển 1 sand pixel (3 tầng)
+ 4. Tóm tắt nhanh (cheat sheet)
+
+
+================================================================================
+ 1. PIXEL INSTANCE = struct Pixel  (KHÔNG phải class)
+================================================================================
+File: Scripts/Runtime/PixelWorld/Pixel.cs
+
+- Một pixel KHÔNG phải class — nó là "struct Pixel", value type.
+- Được lưu trong NativeArray<Pixel>:
+    * PixelWorldChunk.Pixels      → lưu trữ dài hạn (theo chunk)
+    * PixelWorld._simulationBuffer → bản sao vùng quanh camera khi mô phỏng
+- Lý do dùng struct: hàng trăm nghìn pixel xử lý song song bằng Burst job.
+  Dùng class (heap + GC) sẽ chết performance. Đây là thiết kế DATA-ORIENTED.
+- QUAN TRỌNG: Pixel tự nó KHÔNG "biết" mình là sand. Nó chỉ giữ 1 chỉ số
+  materialIndex trỏ vào bảng vật liệu (xem phần 2).
+
+Các field chính:
+    int   materialIndex   // ← trỏ tới PixelMaterial (quyết định loại vật liệu)
+    byte  hasValue        // 0 = ô trống
+    byte  isLoaded        // pixel chưa load thì không mô phỏng
+    byte  isFreeFalling   // đang rơi tự do (chịu gia tốc trọng lực)
+    byte  isSliding       // ưu tiên trượt chéo (cát trượt)
+    byte  sleepCounter    // >= 30 (SleepCounterIsSleepingValue) = ngủ, bỏ mô phỏng
+    byte  simulationScheduled // đã lên lịch mô phỏng frame này chưa
+    int   x, y            // vị trí (đơn vị pixel)
+    float deltaX, deltaY  // tích luỹ dịch chuyển; |delta| >= 1 thì apply vào x,y
+    float velocityX, velocityY // vận tốc (m/s)
+    float health, temperature  // máu, nhiệt độ (°C)
+    int   dynamicObjectId; float u, v  // liên kết dynamic object (chưa dùng)
+    byte  r, g, b, a      // màu
+
+(byte thay cho bool vì IL2CPP + Burst không thích bool.)
+
+
+================================================================================
+ 2. STRUCT QUYẾT ĐỊNH "LÀ SAND" = PixelMaterial + enum PixelBehaviour
+================================================================================
+Files: PixelMaterial.cs, PixelBehaviour.cs, PixelMaterialId.cs
+
+Chuỗi liên kết quyết định 1 pixel là sand:
+
+    Pixel.materialIndex ──tra──► NativeArray<PixelMaterial>[index]
+                                      └── behaviour = PixelBehaviour.MoveLikeSand
+
+--- enum PixelBehaviour (PixelBehaviour.cs) — "tính cách" material ---
+    None=0, Static=1, Solid=2,
+    MoveLikeSand=11,      ← ĐÂY là cái quyết định "rơi & trượt như cát"
+    MoveLikeLiquid=12, MoveLikeGas=13,
+    CombineByCorrosion=30, HeatTransfer=40
+
+--- struct PixelMaterial (PixelMaterial.cs) — cách package kiểm tra ---
+    // 1 material giữ tối đa 4 behaviour: behaviour0..behaviour3
+    bool IsMovable()           => HasBehaviour(MoveLikeLiquid | MoveLikeSand | MoveLikeGas);
+    bool IsAffectedByGravity() => HasBehaviour(MoveLikeLiquid) || HasBehaviour(MoveLikeSand);
+    // Thuộc tính ảnh hưởng chuyển động: density, friction, gravityScale,
+    // bouncyness, flowSpeed (số pixel/frame tối đa material chảy được).
+
+--- struct Pixel hỏi ngược lại material của nó (Pixel.cs) ---
+    pixel.IsAffectedByGravity(ref materials)  // sand + gravityScale>0 + !gas → chịu trọng lực
+    pixel.HasBehaviour(PixelBehaviour.MoveLikeSand, ref materials)
+    pixel.IsMovable(ref materials)
+
+--- enum PixelMaterialId (PixelMaterialId.cs) — id tra bảng ---
+    Empty=0, Static=1, Rock=3, Sand=4, Water=5, Wood=6,
+    Oil=7, Acid=8, Lava=9, Snow=10, Steam=11
+    → PixelMaterialId.Sand = 4 là id để tra ra material sand.
+
+3 mảnh cần nhớ:
+    | Vai trò                         | Đối tượng                                   |
+    |---------------------------------|---------------------------------------------|
+    | Instance (dữ liệu 1 hạt)        | struct Pixel                                |
+    | Định nghĩa "sand" (data)        | struct PixelMaterial + PixelBehaviour.MoveLikeSand |
+    | Cờ trạng thái động của hạt sand | Pixel.isFreeFalling / isSliding / sleepCounter / velocityX,Y |
+
+
+================================================================================
+ 3. API DI CHUYỂN 1 SAND PIXEL (3 tầng)
+================================================================================
+KHÔNG có API công khai kiểu MovePixel(from, to). Di chuyển sand = THAY ĐỔI
+cờ/vận tốc của Pixel rồi để PixelWorldSimulationJob thực thi.
+
+--------------------------------------------------------------------------------
+ TẦNG A — Bên trong PixelWorldSimulationJob (private, Burst, chạy trên buffer)
+--------------------------------------------------------------------------------
+Files: PixelWorldSimulationJob.cs / .MovementUtils.cs / .Utils.cs
+Đây là nơi sand THẬT SỰ dời chỗ mỗi bước mô phỏng. Toạ độ "in buffer" (không phải
+world). PRIVATE — KHÔNG gọi từ ngoài. Đọc để hiểu/tinh chỉnh hành vi rơi:
+
+    tryTravelTo(x,y, targetX,targetY, ...)      // thử đi tới đích (xử lý va chạm)
+    tryTravelBy(x,y, xOffset,yOffset, ...)       // thử đi theo offset
+    tryTravelByAngleSweep(...)                    // quét góc: sand trượt chéo khi bị chặn
+    tryMoveTo(x,y, finalX,finalY, updateVelocity) // mover cấp thấp nhất (đổi chỗ 2 pixel)
+    canMoveTo(x,y, targetX,targetY)               // kiểm tra có đi được không
+    canTravelTo(...)                              // kiểm tra đường đi (Bresenham)
+    wakeUpNeighbours(x,y) / wakeUp(x,y)           // đánh thức hàng xóm (bán kính 2)
+    setPixel(ref pixel, xInBuffer, yInBuffer)     // ghi pixel vào buffer
+
+Logic sand mỗi frame: thử đi XUỐNG → XUỐNG-CHÉO (sweep góc theo flowSpeed &
+friction). isFreeFalling bật khi rơi tự do; sleepCounter>=30 thì bỏ qua (ngủ).
+HorizontalOrder đảo chiều mỗi frame để mô phỏng đối xứng trái/phải.
+
+--------------------------------------------------------------------------------
+ TẦNG B — Helper vật lý PUBLIC trên chính struct Pixel (Pixel.cs)
+--------------------------------------------------------------------------------
+Sửa vận tốc/trạng thái 1 hạt. Job dùng; bạn cũng gọi được khi tự xử lý pixel:
+
+    pixel.ApplyVelocityToPositionDelta(deltaTime, pixelsPerUnit); // v → deltaX/Y
+    pixel.ApplyFriction(deltaTime, ref ground, ref materials);
+    pixel.MovementDeltaReachedPixels();   // deltaX/Y >= 1 → tới lúc dời ô
+    pixel.GetDeltaXInt(limit) / GetDeltaYInt(limit); // clamp theo SimulationMargin
+    pixel.SetVelocityX(v) / SetVelocityY(v);
+    pixel.SetVelocityDirectionX(dir) / SetVelocityDirectionY(dir);
+    pixel.StartFreeFalling() / StopFreeFalling() / StopMoving();
+    pixel.WakeUp() / Sleep() / IsAwake() / IsAsleep();
+    pixel.HasVelocity() / GetSqrSpeed();
+
+--------------------------------------------------------------------------------
+ TẦNG C — Từ CODE GAME của bạn (public, qua PixelWorld.Draw.cs)
+--------------------------------------------------------------------------------
+Bạn KHÔNG tự dời từng pixel trong lúc mô phỏng (buffer bị job chiếm). Bạn KÍCH
+HOẠT để job lo phần di chuyển:
+
+    // Đọc / ghi 1 pixel ở toạ độ world-pixel
+    pixelWorld.TryGetPixelAt(x, y, out Pixel p);
+    pixelWorld._pixelsToDraw.Add(pixel);   // hàng đợi ghi (áp dụng ở frame sau)
+
+    // Đánh thức để sand bắt đầu rơi lại (QUAN TRỌNG NHẤT với game ảnh-sand)
+    pixelWorld.WakeUpNeighbours(x, y);     // nội bộ gọi pixel.WakeUp()
+
+    // Đặt/vẽ sand — engine tự mô phỏng rơi sau đó
+    pixelWorld.DrawPixelAt(x, y, PixelMaterialId.Sand);
+    pixelWorld.DrawLine(shape, size, x0,y0, x1,y1, PixelMaterialId.Sand);
+    pixelWorld.DrawBrushAt(PixelWorldBrushShape.Circle, size, x, y, PixelMaterialId.Sand);
+
+    // Chuyển input → toạ độ pixel (cho swipe)
+    pixelWorld.ScreenToPixelPos(screenPos);
+    pixelWorld.MouseToPixelPos(Input.mousePosition);
+
+--- Ví dụ "release": đánh thức + cho rơi 1 hạt đang ngủ, giữ nguyên vị trí ---
+    if (world.TryGetPixelAt(x, y, out Pixel p) && !p.IsEmpty()) {
+        p.WakeUp();               // reset sleepCounter
+        p.StartFreeFalling();     // bật cờ rơi tự do
+        p.SetVelocityY(-0.01f);   // huých nhẹ xuống để job bắt đầu tính
+        world._pixelsToDraw.Add(p);
+        world.WakeUpNeighbours(x, y);  // lan để rơi dây chuyền
+    }
+
+--- Ví dụ "release" GIỮ MÀU ẢNH nhưng đổi sang material sand rơi được ---
+    // (material sand phải đặt colorStrategy = FromImage để không bị tô lại màu)
+    if (world.TryGetPixelAt(x, y, out Pixel p) && !p.IsEmpty()) {
+        var levelInfo = LevelInfo.GetLoadedLevelInfo(world.Level);
+        ref var mats = ref levelInfo.Materials.NativeMaterials;
+        var sand = PixelFactory.CreatePixel(
+            x, y, p.r, p.g, p.b, p.a,          // GIỮ màu gốc của ảnh
+            isEmpty:false, isLoaded:true,
+            ref mats, PixelMaterialId.Sand, ref world.RandomNumberGenerator);
+        world._pixelsToDraw.Add(sand);
+        world.WakeUpNeighbours(x, y);
+    }
+
+
+================================================================================
+ 4. TÓM TẮT NHANH (CHEAT SHEET)
+================================================================================
+- 1 pixel instance      = struct Pixel (Pixel.cs), value type trong NativeArray.
+- "Là sand"             = Pixel.materialIndex → PixelMaterial có behaviour
+                          PixelBehaviour.MoveLikeSand (id: PixelMaterialId.Sand=4).
+- Di chuyển sand thật    = PixelWorldSimulationJob (private, Burst) — không gọi ngoài.
+- Bạn tác động từ ngoài  = đổi cờ/vận tốc của Pixel + WakeUp + StartFreeFalling,
+                          đẩy vào world._pixelsToDraw, gọi WakeUpNeighbours.
+- Không có MovePixel(from,to) công khai. "Release ảnh cho rơi" bản chất là:
+  đảm bảo pixel có material MoveLikeSand + WakeUp() + StartFreeFalling().
+
+Tham chiếu file:
+    Pixel ................ Scripts/Runtime/PixelWorld/Pixel.cs
+    PixelMaterial ........ Scripts/Runtime/PixelWorld/PixelMaterial.cs
+    PixelBehaviour ....... Scripts/Runtime/PixelWorld/PixelBehaviour.cs
+    PixelMaterialId ...... Scripts/Runtime/PixelWorld/PixelMaterialId.cs
+    PixelFactory ......... Scripts/Runtime/PixelWorld/PixelFactory.cs
+    API vẽ/đọc/wake ...... Scripts/Runtime/PixelWorld/PixelWorld.Draw.cs
+    Mô phỏng di chuyển ... Scripts/Runtime/PixelWorld/PixelWorldSimulationJob(.MovementUtils/.Utils).cs
+
+================================================================================
+ HẾT
+================================================================================
